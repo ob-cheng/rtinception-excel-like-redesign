@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Home, FileText, Camera, HelpCircle, Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Upload, Copy, Trash2, ChevronDown as Caret, Filter, Check } from "lucide-react";
+import { Home, FileText, Camera, HelpCircle, Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Upload, Copy, Trash2, ChevronDown as Caret, Filter, Check, MoreHorizontal, Pencil, Eye, Clock, Loader2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 // Signed-in user — in a real app this is resolved from the user ID the app reads at startup.
@@ -17,31 +17,47 @@ type Idea = {
   brand: string;
   type: string;
   project: string;
+  claim: string;
+  status: string;
 };
 
 const initialIdeas: Idea[] = [
-  { uid: "CE128", franchise: "Surgical", area: "CRCX", pathway: "IIT", brand: "BSS", type: "ATP - R&D", project: "BSS Plus" },
-  { uid: "CE127", franchise: "Surgical", area: "CRCX", pathway: "Test created", brand: "BSS", type: "Contact Lens", project: "BSS Plus" },
-  { uid: "CE126", franchise: "Surgical", area: "CRCX", pathway: "IIT", brand: "BSS", type: "ATP - R&D", project: "BSS Plus" },
-  { uid: "CE125", franchise: "Surgical", area: "CRCX", pathway: "IIT", brand: "INTREPID", type: "ATP - R&D", project: "INTREPID Hybrid Tip" },
-  { uid: "RXG005", franchise: "Surgical", area: "CRCX", pathway: "AIT", brand: "Centurion", type: "Tier 2 / 3 R&D", project: "Centurion Silver" },
-  { uid: "RXG006", franchise: "Surgical", area: "CRCX", pathway: "IIT", brand: "Centurion", type: "ATP - R&D", project: "Centurion Silver" },
+  { uid: "CE128",  franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "BSS",        type: "ATP - R&D",      project: "BSS Plus",             claim: "Superior corneal clarity post-op",            status: "Approved"   },
+  { uid: "CE127",  franchise: "Surgical",     area: "CRCX",     pathway: "Test created", brand: "BSS",        type: "Contact Lens",   project: "BSS Plus",             claim: "Extended wear comfort up to 30 days",         status: "Approved"   },
+  { uid: "CE125",  franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "INTREPID",   type: "ATP - R&D",      project: "INTREPID Hybrid Tip",  claim: "Fastest aspiration rate in its class",        status: "Approved"   },
+  { uid: "RXG005", franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "Centurion",  type: "Tier 2 / 3 R&D", project: "Centurion Silver",     claim: "Reduce surge by 40% vs. predicate",           status: "Approved"   },
+  { uid: "RXG006", franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "Centurion",  type: "ATP - R&D",      project: "Centurion Silver",     claim: "Best-in-class IOP stability during phaco",    status: "Funded"     },
+  { uid: "CE123",  franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "OVD",        type: "Tier 2 / 3 R&D", project: "OVDs",                 claim: "Maintains anterior chamber depth throughout",  status: "Harmonized" },
+  { uid: "VCR041", franchise: "Vision Care",  area: "Dry Eye",  pathway: "Sponsored",    brand: "Systane",    type: "Clinical",       project: "Systane Ultra UD",     claim: "24-hour dry eye symptom relief, single dose",  status: "Submitted"  },
+  { uid: "VCR039", franchise: "Vision Care",  area: "Dry Eye",  pathway: "IIT",          brand: "Systane",    type: "Contact Lens",   project: "Systane Hydration",    claim: "90% patient satisfaction at 6 months",        status: "Draft"      },
+  { uid: "VCR044", franchise: "Vision Care",  area: "Glaucoma", pathway: "AIT",          brand: "Travatan",   type: "ATP - R&D",      project: "Travatan Z Next Gen",  claim: "Non-inferior IOP lowering with fewer drops",  status: "Approved"   },
+  { uid: "PHR012", franchise: "Pharmaceutical",area: "Retina",  pathway: "Sponsored",    brand: "VEGF-Trap",  type: "Clinical",       project: "Aflibercept Extended", claim: "Vision gain ≥15 ETDRS letters at 52 weeks",   status: "Funded"     },
+  { uid: "PHR015", franchise: "Pharmaceutical",area: "Retina",  pathway: "IIT",          brand: "VEGF-Trap",  type: "ATP - R&D",      project: "Aflibercept HD",       claim: "Reduce injection burden to q16w",              status: "Submitted"  },
+  { uid: "PHR018", franchise: "Pharmaceutical",area: "Glaucoma",pathway: "AIT",          brand: "Simbrinza",  type: "Tier 2 / 3 R&D", project: "Simbrinza BID",        claim: "IOP reduction ≥30% from baseline at 12M",     status: "Draft"      },
+  { uid: "CE119",  franchise: "Surgical",     area: "Cataract", pathway: "IIT",          brand: "AcrySof",    type: "ATP - R&D",      project: "AcrySof IQ Vivity+",   claim: "Full range of vision without dysphotopsia",   status: "Harmonized" },
+  { uid: "CE121",  franchise: "Surgical",     area: "Cataract", pathway: "Sponsored",    brand: "AcrySof",    type: "Clinical",       project: "AcrySof IQ PanOptix",  claim: "Spectacle independence in 85% of patients",   status: "Approved"   },
+  { uid: "VCR051", franchise: "Vision Care",  area: "Dry Eye",  pathway: "Sponsored",    brand: "Pataday",    type: "Clinical",       project: "Pataday Once Daily",   claim: "Symptom-free days ≥5 of 7 at peak season",    status: "Funded"     },
+  { uid: "RXG009", franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "Centurion",  type: "ATP - R&D",      project: "Centurion Active Sentry", claim: "Zero-surge phacoemulsification",               status: "Draft"      },
+  { uid: "PHR022", franchise: "Pharmaceutical",area: "Retina",  pathway: "Sponsored",    brand: "Ozurdex",    type: "Clinical",       project: "Ozurdex PRN Protocol", claim: "Anatomic resolution at 6M with PRN dosing",   status: "Submitted"  },
+  { uid: "CE131",  franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "MIVS",       type: "Tier 2 / 3 R&D", project: "MIVS 27g Plus",        claim: "Lowest incidence of post-op hypotony",        status: "Harmonized" },
 ];
 
-const emptyDraft: Idea = { uid: "", franchise: "", area: "", pathway: "", brand: "", type: "", project: "" };
+const emptyDraft: Idea = { uid: "", franchise: "", area: "", pathway: "", brand: "", type: "", project: "", claim: "", status: "" };
 
 type SortDir = "asc" | "desc" | null;
 
 type Column = { key: keyof Idea; label: string; options?: string[] };
 
 const columns: Column[] = [
-  { key: "uid", label: "UID" },
-  { key: "franchise", label: "FRANCHISE", options: ["Surgical", "Vision Care", "Pharmaceutical"] },
-  { key: "area", label: "THERAPEUTIC AREA", options: ["CRCX", "Retina", "Glaucoma", "Cataract", "Dry Eye"] },
-  { key: "pathway", label: "RESEARCH PATHWAY", options: ["IIT", "AIT", "Test created", "Sponsored"] },
-  { key: "brand", label: "PRODUCT FAMILY (BRAND)" },
-  { key: "type", label: "PRODUCT TYPE", options: ["ATP - R&D", "Tier 2 / 3 R&D", "Contact Lens", "Clinical"] },
-  { key: "project", label: "PRODUCT / PROJECT" },
+  { key: "uid",      label: "UID" },
+  { key: "franchise",label: "FRANCHISE",                options: ["Surgical", "Vision Care", "Pharmaceutical"] },
+  { key: "area",     label: "THERAPEUTIC AREA",         options: ["CRCX", "Retina", "Glaucoma", "Cataract", "Dry Eye"] },
+  { key: "pathway",  label: "RESEARCH PATHWAY",         options: ["IIT", "AIT", "Test created", "Sponsored"] },
+  { key: "brand",    label: "PRODUCT FAMILY (BRAND)" },
+  { key: "type",     label: "PRODUCT TYPE",             options: ["ATP - R&D", "Tier 2 / 3 R&D", "Contact Lens", "Clinical"] },
+  { key: "project",  label: "PRODUCT / PROJECT" },
+  { key: "claim",    label: "TARGET ASPIRATIONAL CLAIM" },
+  { key: "status",   label: "STATUS",                   options: ["Draft", "Submitted", "Approved", "Funded", "Harmonized"] },
 ];
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
@@ -55,6 +71,7 @@ function GridCell({
   editing,
   seed,
   placeholder,
+  indicator,
   onSelect,
   onStartEdit,
   onCommit,
@@ -66,6 +83,7 @@ function GridCell({
   editing: boolean;
   seed: string;
   placeholder?: string;
+  indicator?: "dirty" | "saving" | "error" | null;
   onSelect: () => void;
   onStartEdit: () => void;
   onCommit: (v: string, move: MoveDir) => void;
@@ -115,19 +133,101 @@ function GridCell({
     );
   }
 
+  const statusColors: Record<string, string> = {
+    Draft:      "bg-gray-100 text-gray-500",
+    Submitted:  "bg-blue-50 text-blue-600",
+    Approved:   "bg-green-50 text-green-700",
+    Funded:     "bg-violet-50 text-violet-700",
+    Harmonized: "bg-amber-50 text-amber-700",
+  };
+
+  const isStatus = col.key === "status";
+
   return (
     <td
       onClick={onSelect}
       onDoubleClick={onStartEdit}
-      className={`px-4 py-[11px] cursor-cell select-none whitespace-nowrap border-r border-gray-100/80 text-[13px] leading-snug ${
+      className={`px-4 py-[11px] cursor-cell select-none whitespace-nowrap border-r border-gray-100/80 text-[13px] leading-snug transition-colors duration-100 ${
         isFirst ? "text-gray-800 font-medium" : "text-gray-600"
       } ${active ? "ring-2 ring-inset ring-[#0d2d6b] bg-[#0d2d6b]/[0.04]" : ""}`}
     >
-      <span className="inline-flex items-center gap-1">
-        {value !== "" ? value : <span className="text-gray-300">{placeholder}</span>}
-        {col.options && active && <Caret size={11} className="text-gray-400" />}
+      <span className="inline-flex items-center gap-1.5">
+        {isStatus && value ? (
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11.5px] font-medium ${statusColors[value] ?? "bg-gray-100 text-gray-500"}`}>
+            {value}
+          </span>
+        ) : value !== "" ? value : (
+          <span className="text-gray-300">{placeholder}</span>
+        )}
+        {col.options && active && !isStatus && <Caret size={11} className="text-gray-400" />}
+        {isStatus && active && <Caret size={11} className="text-gray-400" />}
+        {indicator === "saving" && (
+          <Loader2 size={10} className="animate-spin text-amber-400 shrink-0" />
+        )}
+        {indicator === "dirty" && (
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" title="Unsaved changes" />
+        )}
+        {indicator === "error" && (
+          <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" title="Save failed" />
+        )}
       </span>
     </td>
+  );
+}
+
+function RowMenu({
+  row,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}: {
+  row: Idea;
+  onEdit: (row: Idea) => void;
+  onDuplicate: (row: Idea) => void;
+  onDelete: (row: Idea) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  function item(icon: React.ReactNode, label: string, action: () => void, danger = false) {
+    return (
+      <button
+        onClick={() => { action(); setOpen(false); }}
+        className={`flex items-center gap-2.5 w-full text-left px-3.5 py-[7px] text-[13px] transition-colors duration-100 rounded-lg mx-1 my-px active:scale-[0.98] ${
+          danger
+            ? "text-red-500 hover:bg-red-50 active:bg-red-100/70"
+            : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+        }`}
+        style={{ width: "calc(100% - 8px)" }}
+      >
+        <span className={danger ? "text-red-400" : "text-gray-400"}>{icon}</span>
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
+        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 active:scale-95 transition-all duration-100"
+      >
+        <MoreHorizontal size={15} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="pop-in absolute right-0 top-full mt-1.5 z-50 w-52 bg-white border border-gray-200/80 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] py-1.5 overflow-hidden">
+            {item(<Pencil size={13} />, "Edit idea", () => onEdit(row))}
+            {item(<Eye size={13} />, "View idea details", () => toast.info(`Details for ${row.uid}`))}
+            {item(<Clock size={13} />, "View idea history", () => toast.info(`History for ${row.uid}`))}
+            <div className="border-t border-gray-100 my-1" />
+            {item(<Copy size={13} />, "Duplicate", () => onDuplicate(row))}
+            {item(<Trash2 size={13} />, "Delete", () => onDelete(row), true)}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -141,7 +241,7 @@ function SortIcon({ dir }: { dir: SortDir }) {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"All" | "Draft" | "Submitted" | "Approved">("All");
+  const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
@@ -156,14 +256,22 @@ export default function App() {
   const [active, setActive] = useState<{ r: number; c: number } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [seed, setSeed] = useState("");
+  const [dirtySet, setDirtySet] = useState<Set<string>>(new Set());
+  const [savingSet, setSavingSet] = useState<Set<string>>(new Set());
   const gridRef = useRef<HTMLDivElement>(null);
+  const dirtyRows = useRef<Set<string>>(new Set());
+  const savingRows = useRef<Set<string>>(new Set());
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // rowsRef keeps flush logic in sync with latest rows state without stale closures
+  const rowsRef = useRef(rows);
+  useEffect(() => { rowsRef.current = rows; }, [rows]);
 
-  const tabs: { label: "All" | "Draft" | "Submitted" | "Approved"; count: number }[] = [
-    { label: "All", count: rows.length },
-    { label: "Draft", count: 4 },
-    { label: "Submitted", count: 0 },
-    { label: "Approved", count: 10 },
-  ];
+  const statusLabels = ["All", "Draft", "Submitted", "Approved", "Funded", "Harmonized"] as const;
+  type TabLabel = typeof statusLabels[number];
+  const tabs = statusLabels.map(label => ({
+    label,
+    count: label === "All" ? rows.length : rows.filter(r => r.status === label).length,
+  }));
 
   function handleSort(key: string) {
     if (sortCol === key) {
@@ -175,13 +283,70 @@ export default function App() {
     }
   }
 
+  // --- Dirty-row save strategy ---
+  // Changes accumulate locally; API calls only fire on row-leave or 3s idle.
+  // This keeps the gateway quiet even during rapid Tab/Enter navigation.
+
+  function syncDirtyState() {
+    setDirtySet(new Set(dirtyRows.current));
+  }
+
+  function syncSavingState() {
+    setSavingSet(new Set(savingRows.current));
+  }
+
+  async function flushDirty(uids?: string[]) {
+    const toSave = uids ?? Array.from(dirtyRows.current);
+    for (const uid of toSave) {
+      if (savingRows.current.has(uid)) continue;
+      savingRows.current.add(uid);
+      dirtyRows.current.delete(uid);
+      syncDirtyState();
+      syncSavingState();
+      const row = rowsRef.current.find(r => r.uid === uid);
+      if (!row) { savingRows.current.delete(uid); syncSavingState(); continue; }
+      try {
+        // Simulated API call — replace with real fetch/axios call
+        await new Promise<void>((res, rej) =>
+          setTimeout(() => (Math.random() > 0.15 ? res() : rej(new Error("Network error"))), 600)
+        );
+      } catch {
+        dirtyRows.current.add(uid);
+        toast.error(`Failed to save ${uid}`, { description: "Will retry on next change." });
+        syncDirtyState();
+      } finally {
+        savingRows.current.delete(uid);
+        syncSavingState();
+      }
+    }
+  }
+
+  function markDirty(uid: string) {
+    dirtyRows.current.add(uid);
+    syncDirtyState();
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => flushDirty(), 3000);
+  }
+
+  // Flush on tab/window blur so no data is lost on tab switch or close
+  useEffect(() => {
+    function handleBlur() { if (dirtyRows.current.size > 0) flushDirty(); }
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("beforeunload", handleBlur);
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("beforeunload", handleBlur);
+    };
+  }, []);
+
   const filtered = rows.filter(row => {
+    const matchesTab = activeTab === "All" || row.status === activeTab;
     const matchesSearch = !search || Object.values(row).some(v => v.toLowerCase().includes(search.toLowerCase()));
     const matchesFilters = columns.every(col => {
       const sel = colFilters[col.key];
       return !sel || sel.length === 0 || sel.includes(row[col.key]);
     });
-    return matchesSearch && matchesFilters;
+    return matchesTab && matchesSearch && matchesFilters;
   });
 
   const distinctValues = (key: keyof Idea) =>
@@ -205,8 +370,26 @@ export default function App() {
       })
     : filtered;
 
-  const draftIndex = sorted.length; // draft row lives just past the data rows
+  const draftIndex = sorted.length;
   const totalRows = sorted.length + 1;
+
+  // sortedRef lets the row-leave effect resolve UIDs without capturing a stale closure.
+  const sortedRef = useRef(sorted);
+  sortedRef.current = sorted; // update synchronously every render — no effect needed
+
+  // Track previous active UID (not index) so flush survives tab/sort/filter changes.
+  const prevActiveUid = useRef<string | null>(null);
+  useEffect(() => {
+    const curUid =
+      active !== null && active.r !== draftIndex
+        ? sortedRef.current[active.r]?.uid ?? null
+        : null;
+    const prevUid = prevActiveUid.current;
+    if (prevUid !== curUid) {
+      prevActiveUid.current = curUid;
+      if (prevUid && dirtyRows.current.has(prevUid)) flushDirty([prevUid]);
+    }
+  }, [active?.r]);
 
   // Keep keyboard focus on the grid whenever a cell is selected but not being edited.
   useEffect(() => {
@@ -226,7 +409,10 @@ export default function App() {
       }
     } else {
       const target = sorted[r];
-      if (target) setRows(prev => prev.map(row => (row.uid === target.uid ? { ...row, [key]: val } : row)));
+      if (target) {
+        setRows(prev => prev.map(row => (row.uid === target.uid ? { ...row, [key]: val } : row)));
+        markDirty(target.uid);
+      }
     }
   }
 
@@ -287,6 +473,13 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f5f5f7]" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <style>{`
+        @keyframes popIn {
+          from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .pop-in { animation: popIn 0.14s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; }
+      `}</style>
       <Toaster position="bottom-right" richColors />
 
       {/* Sidebar */}
@@ -312,17 +505,17 @@ export default function App() {
             <span className="text-[10.5px] font-medium tracking-[0.01em]">Home</span>
           </button>
 
-          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] transition-colors">
+          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150">
             <FileText size={20} strokeWidth={1.6} />
             <span className="text-[10.5px] tracking-[0.01em]">My Ideas</span>
           </button>
 
-          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] transition-colors">
+          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150">
             <Camera size={20} strokeWidth={1.6} />
             <span className="text-[10.5px] tracking-[0.01em]">Funded</span>
           </button>
 
-          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] transition-colors">
+          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150">
             <HelpCircle size={20} strokeWidth={1.6} />
             <span className="text-[10.5px] tracking-[0.01em]">Help</span>
           </button>
@@ -382,8 +575,8 @@ export default function App() {
               {tabs.map(tab => (
                 <button
                   key={tab.label}
-                  onClick={() => setActiveTab(tab.label)}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium border-b-[1.5px] -mb-px transition-colors ${
+                  onClick={() => setActiveTab(tab.label as string)}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium border-b-[1.5px] -mb-px transition-colors duration-150 ${
                     activeTab === tab.label
                       ? "border-[#0d2d6b] text-[#0d2d6b]"
                       : "border-transparent text-gray-400 hover:text-gray-700"
@@ -391,7 +584,7 @@ export default function App() {
                 >
                   {tab.label}
                   <span
-                    className={`text-[11px] px-[6px] py-px rounded-full font-semibold tabular-nums ${
+                    className={`text-[11px] px-[6px] py-px rounded-full font-semibold tabular-nums transition-colors duration-150 ${
                       activeTab === tab.label
                         ? "bg-[#0d2d6b] text-white"
                         : "bg-gray-100 text-gray-500"
@@ -403,11 +596,11 @@ export default function App() {
               ))}
             </div>
             <div className="flex items-center gap-1 text-[12.5px] text-gray-400">
-              <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors" disabled>
+              <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 active:scale-90 transition-all duration-100" disabled>
                 <ChevronLeft size={14} />
               </button>
               <span className="px-1">Page 1 of 3</span>
-              <button className="p-1 rounded hover:bg-gray-100 transition-colors">
+              <button className="p-1 rounded hover:bg-gray-100 active:scale-90 transition-all duration-100">
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -418,7 +611,7 @@ export default function App() {
             ref={gridRef}
             tabIndex={0}
             onKeyDown={onGridKeyDown}
-            className="flex-1 overflow-auto bg-white rounded-2xl border border-gray-200/70 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_1px_2px_rgba(0,0,0,0.04)] focus:outline-none"
+            className="flex-1 overflow-auto bg-white rounded-2xl border border-gray-200/70 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_1px_2px_rgba(0,0,0,0.04)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/20 transition-shadow"
           >
             <table className="w-full text-[13px] border-collapse">
               <thead>
@@ -434,7 +627,7 @@ export default function App() {
                         <div className="flex items-center justify-between gap-1">
                           <button
                             onClick={() => handleSort(col.key)}
-                            className={`flex items-center hover:text-gray-700 transition-colors cursor-pointer ${sortCol === col.key ? "text-[#0d2d6b]" : ""}`}
+                            className={`flex items-center hover:text-gray-700 transition-colors duration-150 cursor-pointer ${sortCol === col.key ? "text-[#0d2d6b]" : ""}`}
                           >
                             {col.label}
                             <SortIcon dir={sortCol === col.key ? sortDir : null} />
@@ -442,7 +635,7 @@ export default function App() {
                           <button
                             onClick={() => setOpenFilter(o => (o === col.key ? null : col.key))}
                             title="Filter column"
-                            className={`p-[3px] rounded-md transition-colors ${isFiltered ? "text-[#0d2d6b] bg-[#0d2d6b]/8" : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"}`}
+                            className={`p-[3px] rounded-md transition-all duration-100 active:scale-90 ${isFiltered ? "text-[#0d2d6b] bg-[#0d2d6b]/8" : "text-gray-300 hover:text-gray-500 hover:bg-gray-100"}`}
                           >
                             <Filter size={12} fill={isFiltered ? "currentColor" : "none"} />
                           </button>
@@ -451,7 +644,7 @@ export default function App() {
                         {openFilter === col.key && (
                           <>
                             <div className="fixed inset-0 z-30" onClick={() => setOpenFilter(null)} />
-                            <div className="absolute right-0 top-full mt-1.5 z-40 w-56 bg-white border border-gray-200/80 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] py-1 normal-case tracking-normal font-normal">
+                            <div className="pop-in absolute right-0 top-full mt-1.5 z-40 w-56 bg-white border border-gray-200/80 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] py-1 normal-case tracking-normal font-normal">
                               <div className="flex items-center justify-between px-3.5 py-2 border-b border-gray-100">
                                 <span className="text-[11.5px] font-semibold text-gray-600">Filter by {col.label.toLowerCase()}</span>
                                 {isFiltered && (
@@ -473,9 +666,9 @@ export default function App() {
                                     <button
                                       key={val}
                                       onClick={() => toggleFilterValue(col.key, val)}
-                                      className="flex items-center gap-2.5 w-full text-left px-3.5 py-[7px] text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+                                      className="flex items-center gap-2.5 w-full text-left px-3.5 py-[7px] text-[13px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors duration-100"
                                     >
-                                      <span className={`flex items-center justify-center w-[15px] h-[15px] rounded-[4px] border transition-colors ${checked ? "text-white border-[#0d2d6b]" : "border-gray-300"}`}
+                                      <span className={`flex items-center justify-center w-[15px] h-[15px] rounded-[4px] border transition-all duration-100 ${checked ? "text-white border-[#0d2d6b]" : "border-gray-300"}`}
                                         style={checked ? { backgroundColor: NAVY } : {}}>
                                         {checked && <Check size={9.5} strokeWidth={3} />}
                                       </span>
@@ -497,38 +690,38 @@ export default function App() {
                 {sorted.map((row, ri) => (
                   <tr
                     key={row.uid}
-                    className={`group border-b border-gray-100/80 transition-colors ${ri % 2 === 1 ? "bg-gray-50/30" : ""} hover:bg-[#0d2d6b]/[0.025]`}
+                    className={`group border-b border-gray-100/80 transition-colors duration-100 ${ri % 2 === 1 ? "bg-gray-50/30" : ""} hover:bg-[#0d2d6b]/[0.025]`}
                   >
-                    {columns.map((col, ci) => (
-                      <GridCell
-                        key={col.key}
-                        col={col}
-                        value={row[col.key]}
-                        active={active?.r === ri && active?.c === ci}
-                        editing={isEditing && active?.r === ri && active?.c === ci}
-                        seed={seed}
-                        onSelect={() => { setActive({ r: ri, c: ci }); setIsEditing(false); }}
-                        onStartEdit={() => { setActive({ r: ri, c: ci }); startEdit(row[col.key]); }}
-                        onCommit={(v, dir) => handleCommit(ri, ci, v, dir)}
-                        onCancel={() => setIsEditing(false)}
-                      />
-                    ))}
+                    {columns.map((col, ci) => {
+                      const isSaving = savingSet.has(row.uid);
+                      const isDirty = dirtySet.has(row.uid);
+                      const indicator = ci === 0
+                        ? isSaving ? "saving" : isDirty ? "dirty" : null
+                        : null;
+                      return (
+                        <GridCell
+                          key={col.key}
+                          col={col}
+                          value={row[col.key]}
+                          active={active?.r === ri && active?.c === ci}
+                          editing={isEditing && active?.r === ri && active?.c === ci}
+                          seed={seed}
+                          indicator={indicator}
+                          onSelect={() => { setActive({ r: ri, c: ci }); setIsEditing(false); }}
+                          onStartEdit={() => { setActive({ r: ri, c: ci }); startEdit(row[col.key]); }}
+                          onCommit={(v, dir) => handleCommit(ri, ci, v, dir)}
+                          onCancel={() => setIsEditing(false)}
+                        />
+                      );
+                    })}
                     <td className="px-2.5 py-[11px] whitespace-nowrap">
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => duplicateRow(row)}
-                          title="Duplicate row"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-[#0d2d6b] hover:bg-[#0d2d6b]/[0.06] transition-colors"
-                        >
-                          <Copy size={13.5} />
-                        </button>
-                        <button
-                          onClick={() => deleteRow(row)}
-                          title="Delete row"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 size={13.5} />
-                        </button>
+                      <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <RowMenu
+                          row={row}
+                          onEdit={r => { setActive({ r: ri, c: 0 }); startEdit(r[columns[0].key]); }}
+                          onDuplicate={duplicateRow}
+                          onDelete={deleteRow}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -562,7 +755,7 @@ export default function App() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => { setActive({ r: draftIndex, c: 0 }); startEdit(""); }}
-                className="flex items-center gap-1.5 font-medium transition-opacity hover:opacity-70"
+                className="flex items-center gap-1.5 font-medium transition-all duration-100 hover:opacity-70 active:scale-95"
                 style={{ color: NAVY }}
               >
                 <Plus size={13} strokeWidth={2.5} />
