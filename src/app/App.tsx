@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Home, FileText, Camera, HelpCircle, Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Upload, Copy, Trash2, ChevronDown as Caret, Filter, Check, MoreHorizontal, Pencil, Eye, Clock, Loader2, Lock } from "lucide-react";
+import { Home, FileText, HelpCircle, Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Upload, Copy, Trash2, ChevronDown as Caret, Filter, Check, MoreHorizontal, Pencil, Eye, Clock, Loader2, Lock, X, ArrowRight, PenLine, Sparkles } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 // Signed-in user — in a real app this is resolved from the user ID the app reads at startup.
@@ -26,17 +26,17 @@ const initialIdeas: Idea[] = [
   { uid: "CE127",  franchise: "Surgical",     area: "CRCX",     pathway: "Test created", brand: "BSS",        type: "Contact Lens",   project: "BSS Plus",             claim: "Extended wear comfort up to 30 days",         status: "Approved"   },
   { uid: "CE125",  franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "INTREPID",   type: "ATP - R&D",      project: "INTREPID Hybrid Tip",  claim: "Fastest aspiration rate in its class",        status: "Approved"   },
   { uid: "RXG005", franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "Centurion",  type: "Tier 2 / 3 R&D", project: "Centurion Silver",     claim: "Reduce surge by 40% vs. predicate",           status: "Approved"   },
-  { uid: "RXG006", franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "Centurion",  type: "ATP - R&D",      project: "Centurion Silver",     claim: "Best-in-class IOP stability during phaco",    status: "Funded"     },
+  { uid: "RXG006", franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "Centurion",  type: "ATP - R&D",      project: "Centurion Silver",     claim: "Best-in-class IOP stability during phaco",    status: "Approved"   },
   { uid: "CE123",  franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "OVD",        type: "Tier 2 / 3 R&D", project: "OVDs",                 claim: "Maintains anterior chamber depth throughout",  status: "Harmonized" },
   { uid: "VCR041", franchise: "Vision Care",  area: "Dry Eye",  pathway: "Sponsored",    brand: "Systane",    type: "Clinical",       project: "Systane Ultra UD",     claim: "24-hour dry eye symptom relief, single dose",  status: "Submitted"  },
   { uid: "VCR039", franchise: "Vision Care",  area: "Dry Eye",  pathway: "IIT",          brand: "Systane",    type: "Contact Lens",   project: "Systane Hydration",    claim: "90% patient satisfaction at 6 months",        status: "Draft"      },
   { uid: "VCR044", franchise: "Vision Care",  area: "Glaucoma", pathway: "AIT",          brand: "Travatan",   type: "ATP - R&D",      project: "Travatan Z Next Gen",  claim: "Non-inferior IOP lowering with fewer drops",  status: "Approved"   },
-  { uid: "PHR012", franchise: "Pharmaceutical",area: "Retina",  pathway: "Sponsored",    brand: "VEGF-Trap",  type: "Clinical",       project: "Aflibercept Extended", claim: "Vision gain ≥15 ETDRS letters at 52 weeks",   status: "Funded"     },
+  { uid: "PHR012", franchise: "Pharmaceutical",area: "Retina",  pathway: "Sponsored",    brand: "VEGF-Trap",  type: "Clinical",       project: "Aflibercept Extended", claim: "Vision gain ≥15 ETDRS letters at 52 weeks",   status: "Approved"   },
   { uid: "PHR015", franchise: "Pharmaceutical",area: "Retina",  pathway: "IIT",          brand: "VEGF-Trap",  type: "ATP - R&D",      project: "Aflibercept HD",       claim: "Reduce injection burden to q16w",              status: "Submitted"  },
   { uid: "PHR018", franchise: "Pharmaceutical",area: "Glaucoma",pathway: "AIT",          brand: "Simbrinza",  type: "Tier 2 / 3 R&D", project: "Simbrinza BID",        claim: "IOP reduction ≥30% from baseline at 12M",     status: "Draft"      },
   { uid: "CE119",  franchise: "Surgical",     area: "Cataract", pathway: "IIT",          brand: "AcrySof",    type: "ATP - R&D",      project: "AcrySof IQ Vivity+",   claim: "Full range of vision without dysphotopsia",   status: "Harmonized" },
   { uid: "CE121",  franchise: "Surgical",     area: "Cataract", pathway: "Sponsored",    brand: "AcrySof",    type: "Clinical",       project: "AcrySof IQ PanOptix",  claim: "Spectacle independence in 85% of patients",   status: "Approved"   },
-  { uid: "VCR051", franchise: "Vision Care",  area: "Dry Eye",  pathway: "Sponsored",    brand: "Pataday",    type: "Clinical",       project: "Pataday Once Daily",   claim: "Symptom-free days ≥5 of 7 at peak season",    status: "Funded"     },
+  { uid: "VCR051", franchise: "Vision Care",  area: "Dry Eye",  pathway: "Sponsored",    brand: "Pataday",    type: "Clinical",       project: "Pataday Once Daily",   claim: "Symptom-free days ≥5 of 7 at peak season",    status: "Approved"   },
   { uid: "RXG009", franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "Centurion",  type: "ATP - R&D",      project: "Centurion Active Sentry", claim: "Zero-surge phacoemulsification",               status: "Draft"      },
   { uid: "PHR022", franchise: "Pharmaceutical",area: "Retina",  pathway: "Sponsored",    brand: "Ozurdex",    type: "Clinical",       project: "Ozurdex PRN Protocol", claim: "Anatomic resolution at 6M with PRN dosing",   status: "Submitted"  },
   { uid: "CE131",  franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "MIVS",       type: "Tier 2 / 3 R&D", project: "MIVS 27g Plus",        claim: "Lowest incidence of post-op hypotony",        status: "Harmonized" },
@@ -44,11 +44,8 @@ const initialIdeas: Idea[] = [
 
 const emptyDraft: Idea = { uid: "", franchise: "", area: "", pathway: "", brand: "", type: "", project: "", claim: "", status: "" };
 
-// Funded ideas are locked once committed to a budget — editing them requires elevated access.
-// In a real app this would also factor in the signed-in user's role/permissions.
-const LOCKED_STATUSES = new Set(["Funded"]);
-const isLocked = (row: Idea) => LOCKED_STATUSES.has(row.status);
-const LOCK_REASON = "Funded ideas are locked. You don’t have access to edit committed records.";
+const isLocked = (_row: Idea) => false;
+const LOCK_REASON = "";
 
 type SortDir = "asc" | "desc" | null;
 
@@ -63,7 +60,7 @@ const columns: Column[] = [
   { key: "type",     label: "PRODUCT TYPE",             options: ["ATP - R&D", "Tier 2 / 3 R&D", "Contact Lens", "Clinical"] },
   { key: "project",  label: "PRODUCT / PROJECT" },
   { key: "claim",    label: "TARGET ASPIRATIONAL CLAIM" },
-  { key: "status",   label: "STATUS",                   options: ["Draft", "Submitted", "Approved", "Funded", "Harmonized"] },
+  { key: "status",   label: "STATUS",                   options: ["Draft", "Submitted", "Approved", "Harmonized"] },
 ];
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
@@ -147,7 +144,6 @@ function GridCell({
     Draft:      "bg-gray-100 text-gray-500",
     Submitted:  "bg-blue-50 text-blue-600",
     Approved:   "bg-green-50 text-green-700",
-    Funded:     "bg-violet-50 text-violet-700",
     Harmonized: "bg-amber-50 text-amber-700",
   };
 
@@ -201,12 +197,16 @@ function RowMenu({
   row,
   locked,
   onEdit,
+  onViewDetails,
+  onViewHistory,
   onDuplicate,
   onDelete,
 }: {
   row: Idea;
   locked?: boolean;
   onEdit: (row: Idea) => void;
+  onViewDetails: (row: Idea) => void;
+  onViewHistory: (row: Idea) => void;
   onDuplicate: (row: Idea) => void;
   onDelete: (row: Idea) => void;
 }) {
@@ -261,14 +261,425 @@ function RowMenu({
               </div>
             )}
             {item(<Pencil size={13} />, "Edit idea", () => onEdit(row), false, locked)}
-            {item(<Eye size={13} />, "View idea details", () => toast.info(`Details for ${row.uid}`))}
-            {item(<Clock size={13} />, "View idea history", () => toast.info(`History for ${row.uid}`))}
+            {item(<Eye size={13} />, "View idea details", () => onViewDetails(row))}
+            {item(<Clock size={13} />, "View idea history", () => onViewHistory(row))}
             <div className="border-t border-gray-100 my-1" />
             {item(<Copy size={13} />, "Duplicate", () => onDuplicate(row), false, locked)}
             {item(<Trash2 size={13} />, "Delete", () => onDelete(row), true, locked)}
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ─── History data generator ───────────────────────────────────────────────────
+
+type HistoryEvent = {
+  id: string;
+  date: string;
+  time: string;
+  action: string;
+  actor: string;
+  committee?: string;
+  note?: string;
+  statusTo?: string;
+};
+
+const ACTORS = ["Dr. Sarah M.", "James L.", "Priya N.", "Tom R.", "Lisa C.", "Marcus W."];
+const COMMITTEES = ["Clinical Review", "Scientific Committee", "Portfolio Board", "Budget Panel"];
+
+function generateHistory(row: Idea): HistoryEvent[] {
+  // Seed using UID chars for determinism
+  const seed = row.uid.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const pick = <T,>(arr: T[], offset = 0) => arr[(seed + offset) % arr.length];
+
+  const statusChain: string[] = [];
+  const map: Record<string, string[]> = {
+    Draft:      ["Draft"],
+    Submitted:  ["Draft", "Submitted"],
+    Approved:   ["Draft", "Submitted", "Approved"],
+    Harmonized: ["Draft", "Submitted", "Approved", "Harmonized"],
+  };
+  (map[row.status] ?? ["Draft"]).forEach(s => statusChain.push(s));
+
+  const baseYear = 2024;
+  const baseMonth = ((seed % 10) + 1);
+
+  const events: HistoryEvent[] = [];
+
+  statusChain.forEach((status, i) => {
+    const month = String(Math.min(baseMonth + i, 12)).padStart(2, "0");
+    const day = String(((seed * (i + 1)) % 25) + 1).padStart(2, "0");
+    const hour = String(((seed + i * 3) % 10) + 8).padStart(2, "0");
+    const min = String((seed * (i + 2)) % 60).padStart(2, "0");
+    const date = `${baseYear}-${month}-${day}`;
+    const time = `${hour}:${min}`;
+
+    if (i === 0) {
+      events.push({
+        id: `${row.uid}-create`,
+        date, time,
+        action: "Idea created",
+        actor: pick(ACTORS, 0),
+        note: `Initial draft submitted for ${row.project}. Research pathway: ${row.pathway}.`,
+        statusTo: "Draft",
+      });
+      // Add a field edit event
+      events.push({
+        id: `${row.uid}-edit1`,
+        date: `${baseYear}-${month}-${String(Math.min(parseInt(day) + 2, 28)).padStart(2, "0")}`,
+        time: `${String(((seed + 7) % 10) + 9).padStart(2, "0")}:${String((seed * 3) % 60).padStart(2, "0")}`,
+        action: "Target claim updated",
+        actor: pick(ACTORS, 1),
+        note: `"${row.claim.slice(0, 60)}${row.claim.length > 60 ? "…" : ""}"`,
+      });
+    } else {
+      events.push({
+        id: `${row.uid}-status-${i}`,
+        date, time,
+        action: `Status changed to ${status}`,
+        actor: pick(ACTORS, i + 2),
+        committee: pick(COMMITTEES, i),
+        statusTo: status,
+      });
+    }
+  });
+
+  // Most recent first
+  return events.reverse();
+}
+
+// ─── Shared status system ──────────────────────────────────────────────────────
+// One source of truth for status color so pills, dots, and timelines stay in sync.
+type StatusMeta = { dot: string; text: string; soft: string };
+const STATUS_META: Record<string, StatusMeta> = {
+  Draft:      { dot: "#9ca3af", text: "#4b5563", soft: "#f4f4f5" },
+  Submitted:  { dot: "#3b82f6", text: "#1d4ed8", soft: "#eff6ff" },
+  Approved:   { dot: "#10b981", text: "#047857", soft: "#ecfdf5" },
+  Harmonized: { dot: "#f59e0b", text: "#b45309", soft: "#fffbeb" },
+};
+const statusMeta = (s: string): StatusMeta => STATUS_META[s] ?? { dot: "#9ca3af", text: "#4b5563", soft: "#f4f4f5" };
+
+function StatusPill({ status, size = "md" }: { status: string; size?: "sm" | "md" }) {
+  const m = statusMeta(status);
+  const pad = size === "sm" ? "px-2 py-[3px] text-[11px] gap-1.5" : "px-2.5 py-1 text-[12px] gap-2";
+  return (
+    <span
+      className={`inline-flex items-center rounded-full font-medium ${pad}`}
+      style={{ backgroundColor: m.soft, color: m.text }}
+    >
+      <span className="rounded-full" style={{ width: 6, height: 6, backgroundColor: m.dot }} />
+      {status}
+    </span>
+  );
+}
+
+// ─── Idea Detail Panel ─────────────────────────────────────────────────────────
+
+function IdeaDetailPanel({
+  row,
+  onClose,
+  onEdit,
+}: {
+  row: Idea | null;
+  onClose: () => void;
+  onEdit: (row: Idea) => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  // Animate in on mount, out before unmount
+  useEffect(() => {
+    if (row) {
+      requestAnimationFrame(() => setVisible(true));
+    } else {
+      setVisible(false);
+    }
+  }, [row]);
+
+  // Escape to dismiss + focus trap
+  useEffect(() => {
+    if (!row) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    // Move focus into panel
+    panelRef.current?.focus();
+    return () => document.removeEventListener("keydown", onKey);
+  }, [row, onClose]);
+
+  if (!row) return null;
+
+  const locked = isLocked(row);
+
+  // The specification reads like a calm, iOS-Settings-style list — label left, value right,
+  // separated by hairlines. No colored chips, no all-caps eyebrow on every field.
+  const spec: { label: string; value: string }[] = [
+    { label: "Franchise",         value: row.franchise },
+    { label: "Therapeutic area",  value: row.area },
+    { label: "Research pathway",  value: row.pathway },
+    { label: "Product family",    value: row.brand },
+    { label: "Product type",      value: row.type },
+  ];
+
+  const governance: { label: string; value: string }[] = [
+    { label: "Created by",    value: "Sahil Kapoor" },
+    { label: "Created",       value: "Mar 12, 2024" },
+    { label: "Last modified", value: "Jun 3, 2025" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      {/* Scrim */}
+      <div
+        onClick={onClose}
+        className="absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity duration-300"
+        style={{ opacity: visible ? 1 : 0 }}
+      />
+
+      {/* Panel — slides from right */}
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Idea details — ${row.uid}`}
+        className="absolute right-0 top-0 h-full w-[460px] max-w-full bg-white flex flex-col outline-none"
+        style={{
+          boxShadow: "-1px 0 0 rgba(0,0,0,0.04), -24px 0 60px -20px rgba(15,23,42,0.28)",
+          transform: visible ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+        }}
+      >
+        {/* Header — content-first: the project is the real title, the UID is metadata. */}
+        <div className="shrink-0 px-7 pt-6 pb-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="font-mono text-[11px] tracking-[0.02em] text-gray-400">{row.uid}</span>
+                <span className="text-gray-200">·</span>
+                <StatusPill status={row.status} size="sm" />
+                {locked && (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                    <Lock size={11} strokeWidth={2} /> Locked
+                  </span>
+                )}
+              </div>
+              <h2 className="text-[26px] leading-[1.15] tracking-[-0.02em] text-gray-900 truncate">
+                {row.project || "Untitled idea"}
+              </h2>
+              <p className="text-[13px] text-gray-400 mt-1.5">{row.franchise} · {row.area}</p>
+            </div>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 bg-gray-50 hover:bg-gray-100 hover:text-gray-700 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+            >
+              <X size={15} strokeWidth={2.25} />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-7 pb-8">
+
+          {/* Hero — the aspirational claim leads, set large and confident. */}
+          <div className="rounded-2xl px-5 py-5" style={{ backgroundColor: `${NAVY}07` }}>
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <Sparkles size={13} strokeWidth={2} style={{ color: NAVY }} />
+              <p className="text-[11px] font-medium tracking-[0.01em]" style={{ color: NAVY }}>Target aspirational claim</p>
+            </div>
+            <p className="text-[19px] leading-[1.45] tracking-[-0.01em] text-gray-900">
+              {row.claim || <span className="text-gray-300">No claim defined yet.</span>}
+            </p>
+          </div>
+
+          {/* Specification — quiet label/value rows on hairlines. */}
+          <div className="mt-7">
+            <p className="text-[12px] font-medium text-gray-400 mb-1">Specification</p>
+            <dl>
+              {spec.map((f, i) => (
+                <div
+                  key={f.label}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <dt className="text-[13.5px] text-gray-500 shrink-0">{f.label}</dt>
+                  <dd className="text-[13.5px] text-gray-900 text-right">
+                    {f.value || <span className="text-gray-300">—</span>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          {/* Governance — same rhythm, kept subordinate. */}
+          <div className="mt-7">
+            <p className="text-[12px] font-medium text-gray-400 mb-1">Governance</p>
+            <dl>
+              {governance.map((f, i) => (
+                <div
+                  key={f.label}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <dt className="text-[13.5px] text-gray-500 shrink-0">{f.label}</dt>
+                  <dd className="text-[13.5px] text-gray-900 text-right">{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+
+        {/* Footer — one clear action, or a calm lock explanation. */}
+        <div className="shrink-0 px-7 py-4 border-t border-gray-100 bg-white/80 backdrop-blur">
+          {locked ? (
+            <div className="flex items-start gap-2.5 px-4 py-3 bg-gray-50 rounded-2xl text-[13px] text-gray-500 leading-relaxed">
+              <Lock size={14} strokeWidth={2} className="text-gray-400 mt-px shrink-0" />
+              {LOCK_REASON}
+            </div>
+          ) : (
+            <button
+              onClick={() => { onEdit(row); onClose(); }}
+              className="flex items-center justify-center gap-2 w-full h-11 rounded-full text-white text-[14px] font-medium active:scale-[0.99] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0d2d6b]/50"
+              style={{ backgroundColor: NAVY }}
+            >
+              <PenLine size={15} strokeWidth={2} />
+              Edit idea
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Idea History Panel ────────────────────────────────────────────────────────
+
+function IdeaHistoryPanel({
+  row,
+  onClose,
+}: {
+  row: Idea | null;
+  onClose: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (row) {
+      requestAnimationFrame(() => setVisible(true));
+    } else {
+      setVisible(false);
+    }
+  }, [row]);
+
+  useEffect(() => {
+    if (!row) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [row, onClose]);
+
+  if (!row) return null;
+
+  const events = generateHistory(row);
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      {/* Scrim */}
+      <div
+        onClick={onClose}
+        className="absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity duration-300"
+        style={{ opacity: visible ? 1 : 0 }}
+      />
+
+      {/* Panel — slides from right, matching the detail panel */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Activity for ${row.uid}`}
+        className="absolute right-0 top-0 h-full w-[460px] max-w-full bg-white flex flex-col outline-none"
+        style={{
+          boxShadow: "-1px 0 0 rgba(0,0,0,0.04), -24px 0 60px -20px rgba(15,23,42,0.28)",
+          transform: visible ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+        }}
+      >
+        {/* Header */}
+        <div className="shrink-0 px-7 pt-6 pb-4 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-[20px] leading-tight tracking-[-0.02em] text-gray-900">Activity</h2>
+            <p className="text-[13px] text-gray-400 mt-1 truncate">
+              <span className="font-mono text-[11px] text-gray-400">{row.uid}</span>
+              <span className="mx-1.5 text-gray-200">·</span>
+              {row.project}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="shrink-0 grid place-items-center w-8 h-8 rounded-full text-gray-400 bg-gray-50 hover:bg-gray-100 hover:text-gray-700 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+          >
+            <X size={15} strokeWidth={2.25} />
+          </button>
+        </div>
+
+        {/* Timeline */}
+        <div className="flex-1 overflow-y-auto px-7 pb-8">
+          {events.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 pb-10">
+              <Clock size={30} strokeWidth={1.2} className="text-gray-300" />
+              <p className="text-[14px] text-gray-500">No activity yet</p>
+              <p className="text-[13px]">Changes will appear here as the idea progresses.</p>
+            </div>
+          ) : (
+            <ol className="relative">
+              {events.map((ev, i) => {
+                const isStatus = !!ev.statusTo;
+                const m = statusMeta(ev.statusTo ?? "");
+                const dotColor = isStatus ? m.dot : "#d1d5db";
+                const last = i === events.length - 1;
+
+                return (
+                  <li key={ev.id} className="relative flex gap-4 pb-6 last:pb-0">
+                    {/* Rail + node */}
+                    <div className="relative shrink-0 flex justify-center" style={{ width: 12 }}>
+                      {!last && <span className="absolute top-3 bottom-[-24px] w-px bg-gray-150" style={{ backgroundColor: "#eceef1" }} />}
+                      <span
+                        className="relative mt-1 rounded-full ring-4 ring-white"
+                        style={{ width: isStatus ? 11 : 8, height: isStatus ? 11 : 8, backgroundColor: dotColor }}
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 -mt-0.5">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="text-[14px] text-gray-900 leading-snug">{ev.action}</p>
+                        <time className="shrink-0 text-[11.5px] text-gray-350 tabular-nums" style={{ color: "#aab0ba" }}>
+                          {new Date(`${ev.date}T00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </time>
+                      </div>
+                      <p className="text-[12.5px] text-gray-400 mt-1">
+                        {ev.actor}{ev.committee && <> · {ev.committee}</>} · {ev.time}
+                      </p>
+                      {ev.statusTo && (
+                        <div className="mt-2">
+                          <StatusPill status={ev.statusTo} size="sm" />
+                        </div>
+                      )}
+                      {ev.note && (
+                        <p className="text-[13px] text-gray-500 mt-2 leading-relaxed">{ev.note}</p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -298,6 +709,8 @@ export default function App() {
   const [active, setActive] = useState<{ r: number; c: number } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [seed, setSeed] = useState("");
+  const [detailRow, setDetailRow] = useState<Idea | null>(null);
+  const [historyRow, setHistoryRow] = useState<Idea | null>(null);
   const [dirtySet, setDirtySet] = useState<Set<string>>(new Set());
   const [savingSet, setSavingSet] = useState<Set<string>>(new Set());
   const gridRef = useRef<HTMLDivElement>(null);
@@ -308,7 +721,7 @@ export default function App() {
   const rowsRef = useRef(rows);
   useEffect(() => { rowsRef.current = rows; }, [rows]);
 
-  const statusLabels = ["All", "Draft", "Submitted", "Approved", "Funded", "Harmonized"] as const;
+  const statusLabels = ["All", "Draft", "Submitted", "Approved", "Harmonized"] as const;
   type TabLabel = typeof statusLabels[number];
   const tabs = statusLabels.map(label => ({
     label,
@@ -445,7 +858,13 @@ export default function App() {
     const key = columns[c].key;
     if (r === draftIndex) {
       const next = { ...draft, [key]: val };
-      if (next.uid.trim()) {
+      const trimmedUid = next.uid.trim();
+      if (trimmedUid) {
+        if (rowsRef.current.some(r => r.uid === trimmedUid)) {
+          toast.error(`UID ${trimmedUid} already exists`, { description: "Choose a unique UID." });
+          setDraft(next);
+          return;
+        }
         setRows(prev => [...prev, next]);
         setDraft(emptyDraft);
         toast.success(`Added idea ${next.uid}`);
@@ -456,6 +875,13 @@ export default function App() {
     } else {
       const target = sorted[r];
       if (target && !isLocked(target)) {
+        if (key === "uid") {
+          const trimmedUid = val.trim();
+          if (trimmedUid !== target.uid && rowsRef.current.some(r => r.uid === trimmedUid)) {
+            toast.error(`UID ${trimmedUid} already exists`, { description: "Choose a unique UID." });
+            return;
+          }
+        }
         setRows(prev => prev.map(row => (row.uid === target.uid ? { ...row, [key]: val } : row)));
         markDirty(target.uid);
       }
@@ -598,11 +1024,6 @@ export default function App() {
           <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FileText size={20} strokeWidth={1.6} />
             <span className="text-[10.5px] tracking-[0.01em]">My Ideas</span>
-          </button>
-
-          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-            <Camera size={20} strokeWidth={1.6} />
-            <span className="text-[10.5px] tracking-[0.01em]">Funded</span>
           </button>
 
           <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
@@ -781,7 +1202,7 @@ export default function App() {
                   const rowLocked = isLocked(row);
                   return (
                   <tr
-                    key={row.uid}
+                    key={`${row.uid}-${ri}`}
                     className={`group border-b border-gray-100/80 transition-colors duration-100 ${
                       rowLocked ? "bg-gray-50/60" : ri % 2 === 1 ? "bg-gray-50/30" : ""
                     } ${rowLocked ? "hover:bg-gray-50/80" : "hover:bg-[#0d2d6b]/[0.025]"}`}
@@ -816,6 +1237,8 @@ export default function App() {
                           row={row}
                           locked={rowLocked}
                           onEdit={r => { setActive({ r: ri, c: 0 }); startEdit(r[columns[0].key]); }}
+                          onViewDetails={r => { setHistoryRow(null); setDetailRow(r); }}
+                          onViewHistory={r => { setDetailRow(null); setHistoryRow(r); }}
                           onDuplicate={duplicateRow}
                           onDelete={deleteRow}
                         />
@@ -870,6 +1293,16 @@ export default function App() {
 
         </main>
       </div>
+
+      <IdeaDetailPanel
+        row={detailRow}
+        onClose={() => setDetailRow(null)}
+        onEdit={r => { setActive({ r: 0, c: 0 }); startEdit(r[columns[0].key]); }}
+      />
+      <IdeaHistoryPanel
+        row={historyRow}
+        onClose={() => setHistoryRow(null)}
+      />
     </div>
   );
 }
