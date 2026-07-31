@@ -505,8 +505,8 @@ function IdeaDetailPanel({
                   key={f.label}
                   className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
                 >
-                  <dt className="text-[13.5px] text-gray-500 shrink-0">{f.label}</dt>
-                  <dd className="text-[13.5px] text-gray-900 text-right">
+                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 text-right">
                     {f.value || <span className="text-gray-300">—</span>}
                   </dd>
                 </div>
@@ -523,8 +523,8 @@ function IdeaDetailPanel({
                   key={f.label}
                   className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
                 >
-                  <dt className="text-[13.5px] text-gray-500 shrink-0">{f.label}</dt>
-                  <dd className="text-[13.5px] text-gray-900 text-right">{f.value}</dd>
+                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 text-right">{f.value}</dd>
                 </div>
               ))}
             </dl>
@@ -661,7 +661,7 @@ function IdeaHistoryPanel({
                           {new Date(`${ev.date}T00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </time>
                       </div>
-                      <p className="text-[12.5px] text-gray-400 mt-1">
+                      <p className="text-[12px] text-gray-400 mt-1">
                         {ev.actor}{ev.committee && <> · {ev.committee}</>} · {ev.time}
                       </p>
                       {ev.statusTo && (
@@ -963,7 +963,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f5f5f7]" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f5f5f7]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
       <style>{`
         /* Materialize: blur + scale settle together so the surface reads as a material arriving. */
         @keyframes popIn {
@@ -1042,7 +1042,7 @@ export default function App() {
             {currentUser.name.charAt(0)}
           </div>
           <span className="text-[10.5px] font-medium text-white/80">{currentUser.name}</span>
-          <span className="text-[9.5px] text-white/40 tracking-[0.02em]">{currentUser.role}</span>
+          <span className="text-[11px] text-white/40 tracking-[0.02em]">{currentUser.role}</span>
         </div>
       </aside>
 
@@ -1106,7 +1106,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1 text-[12.5px] text-gray-400">
+            <div className="flex items-center gap-1 text-[12px] text-gray-400">
               <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 active:scale-90 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30" disabled>
                 <ChevronLeft size={14} />
               </button>
