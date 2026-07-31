@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Home, FileText, HelpCircle, Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Upload, Copy, Trash2, ChevronDown as Caret, Filter, Check, MoreHorizontal, Pencil, Eye, Clock, Loader2, Lock, X, ArrowRight, PenLine, Sparkles } from "lucide-react";
+import { Home, FileText, HelpCircle, Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus, Upload, Copy, Trash2, ChevronDown as Caret, Filter, Check, MoreHorizontal, Pencil, Eye, Clock, Loader2, Lock, X, ArrowRight, PenLine, Sparkles, Layers, ChevronLeft as PanelCollapse } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 // Signed-in user — in a real app this is resolved from the user ID the app reads at startup.
@@ -9,40 +9,73 @@ const currentUser = { id: "sahil.k", name: "Sahil", role: "Researcher" };
 const NAVY = "#0d2d6b";
 const NAVY_DARK = "#0a2458";
 
+const PORTFOLIOS = [
+  "Cat/Vit Consumables & Visualization",
+  "Specialty Equipment",
+  "Refractive",
+  "Intraocular Lenses (IOL)",
+  "Digital",
+  "Contact Lenses",
+  "Rx Glaucoma",
+  "Rx Dry Eye",
+  "Ocular Health",
+] as const;
+
 type Idea = {
   uid: string;
   franchise: string;
   area: string;
+  brandRanking: string;
+  areaPrioritization: string;
   pathway: string;
-  brand: string;
-  type: string;
+  rtiYear: string;
+  atpProduct: string;
   project: string;
-  claim: string;
-  status: string;
+  strategicImperatives: string;
+  researchQuestions: string;
+  potentialClaims: string;
+  totalIndirect: string;
+  totalDirect: string;
+  totalCost: string;
+  total2027Indirect: string;
+  total2027Direct: string;
+  total2027Cost: string;
+  primaryEndpoint: string;
+  secondaryEndpoint: string;
+  otherEndpoints: string;
+  studyDesign: string;
+  proposedStatistics: string;
+  sampleSize: string;
+  pos: string;
+  region: string;
+  startDate: string;
+  endDate: string;
+  comments: string;
+  portfolio: string;
 };
 
 const initialIdeas: Idea[] = [
-  { uid: "CE128",  franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "BSS",        type: "ATP - R&D",      project: "BSS Plus",             claim: "Superior corneal clarity post-op",            status: "Approved"   },
-  { uid: "CE127",  franchise: "Surgical",     area: "CRCX",     pathway: "Test created", brand: "BSS",        type: "Contact Lens",   project: "BSS Plus",             claim: "Extended wear comfort up to 30 days",         status: "Approved"   },
-  { uid: "CE125",  franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "INTREPID",   type: "ATP - R&D",      project: "INTREPID Hybrid Tip",  claim: "Fastest aspiration rate in its class",        status: "Approved"   },
-  { uid: "RXG005", franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "Centurion",  type: "Tier 2 / 3 R&D", project: "Centurion Silver",     claim: "Reduce surge by 40% vs. predicate",           status: "Approved"   },
-  { uid: "RXG006", franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "Centurion",  type: "ATP - R&D",      project: "Centurion Silver",     claim: "Best-in-class IOP stability during phaco",    status: "Approved"   },
-  { uid: "CE123",  franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "OVD",        type: "Tier 2 / 3 R&D", project: "OVDs",                 claim: "Maintains anterior chamber depth throughout",  status: "Harmonized" },
-  { uid: "VCR041", franchise: "Vision Care",  area: "Dry Eye",  pathway: "Sponsored",    brand: "Systane",    type: "Clinical",       project: "Systane Ultra UD",     claim: "24-hour dry eye symptom relief, single dose",  status: "Submitted"  },
-  { uid: "VCR039", franchise: "Vision Care",  area: "Dry Eye",  pathway: "IIT",          brand: "Systane",    type: "Contact Lens",   project: "Systane Hydration",    claim: "90% patient satisfaction at 6 months",        status: "Draft"      },
-  { uid: "VCR044", franchise: "Vision Care",  area: "Glaucoma", pathway: "AIT",          brand: "Travatan",   type: "ATP - R&D",      project: "Travatan Z Next Gen",  claim: "Non-inferior IOP lowering with fewer drops",  status: "Approved"   },
-  { uid: "PHR012", franchise: "Pharmaceutical",area: "Retina",  pathway: "Sponsored",    brand: "VEGF-Trap",  type: "Clinical",       project: "Aflibercept Extended", claim: "Vision gain ≥15 ETDRS letters at 52 weeks",   status: "Approved"   },
-  { uid: "PHR015", franchise: "Pharmaceutical",area: "Retina",  pathway: "IIT",          brand: "VEGF-Trap",  type: "ATP - R&D",      project: "Aflibercept HD",       claim: "Reduce injection burden to q16w",              status: "Submitted"  },
-  { uid: "PHR018", franchise: "Pharmaceutical",area: "Glaucoma",pathway: "AIT",          brand: "Simbrinza",  type: "Tier 2 / 3 R&D", project: "Simbrinza BID",        claim: "IOP reduction ≥30% from baseline at 12M",     status: "Draft"      },
-  { uid: "CE119",  franchise: "Surgical",     area: "Cataract", pathway: "IIT",          brand: "AcrySof",    type: "ATP - R&D",      project: "AcrySof IQ Vivity+",   claim: "Full range of vision without dysphotopsia",   status: "Harmonized" },
-  { uid: "CE121",  franchise: "Surgical",     area: "Cataract", pathway: "Sponsored",    brand: "AcrySof",    type: "Clinical",       project: "AcrySof IQ PanOptix",  claim: "Spectacle independence in 85% of patients",   status: "Approved"   },
-  { uid: "VCR051", franchise: "Vision Care",  area: "Dry Eye",  pathway: "Sponsored",    brand: "Pataday",    type: "Clinical",       project: "Pataday Once Daily",   claim: "Symptom-free days ≥5 of 7 at peak season",    status: "Approved"   },
-  { uid: "RXG009", franchise: "Surgical",     area: "CRCX",     pathway: "IIT",          brand: "Centurion",  type: "ATP - R&D",      project: "Centurion Active Sentry", claim: "Zero-surge phacoemulsification",               status: "Draft"      },
-  { uid: "PHR022", franchise: "Pharmaceutical",area: "Retina",  pathway: "Sponsored",    brand: "Ozurdex",    type: "Clinical",       project: "Ozurdex PRN Protocol", claim: "Anatomic resolution at 6M with PRN dosing",   status: "Submitted"  },
-  { uid: "CE131",  franchise: "Surgical",     area: "CRCX",     pathway: "AIT",          brand: "MIVS",       type: "Tier 2 / 3 R&D", project: "MIVS 27g Plus",        claim: "Lowest incidence of post-op hypotony",        status: "Harmonized" },
+  { uid: "CE128",  franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "IIT",          rtiYear: "2025", atpProduct: "BSS Plus",                 project: "BSS Plus Clarity Study",           strategicImperatives: "Improve surgical outcomes",              researchQuestions: "Does BSS Plus reduce post-op inflammation vs. standard BSS?",              potentialClaims: "Superior corneal clarity post-op",                   totalIndirect: "42,000",  totalDirect: "128,000", totalCost: "170,000", total2027Indirect: "21,000", total2027Direct: "64,000", total2027Cost: "85,000",  primaryEndpoint: "CDVA at day 30",                    secondaryEndpoint: "Corneal pachymetry at day 7",         otherEndpoints: "Patient comfort VAS score",             studyDesign: "Comparative", proposedStatistics: "CDVA powered at 80%, α=0.05",    sampleSize: "120",  pos: "75%",  region: "USA, Germany",           startDate: "Jan 2025",  endDate: "Dec 2026", comments: "",                          portfolio: "Cat/Vit Consumables & Visualization" },
+  { uid: "CE127",  franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "Test created", rtiYear: "2025", atpProduct: "BSS Plus",                 project: "BSS Plus Osmolarity",              strategicImperatives: "Differentiate BSS Plus portfolio",              researchQuestions: "Can modified osmolarity BSS maintain endothelial cell count longer?",       potentialClaims: "Sustained endothelial cell preservation at 3 months", totalIndirect: "38,000",  totalDirect: "95,000",  totalCost: "133,000", total2027Indirect: "19,000", total2027Direct: "48,000", total2027Cost: "67,000",  primaryEndpoint: "Endothelial cell count at 3 months",secondaryEndpoint: "CCT at 1 month",                      otherEndpoints: "Specular microscopy morphology",        studyDesign: "Controlled", proposedStatistics: "ECC powered at 85%, α=0.05",     sampleSize: "80",   pos: "65%",  region: "USA",                    startDate: "Mar 2025",  endDate: "Sep 2026", comments: "Coordinating with EU site",  portfolio: "Cat/Vit Consumables & Visualization" },
+  { uid: "CE125",  franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "IIT",          rtiYear: "2024", atpProduct: "INTREPID",                 project: "INTREPID Hybrid Tip",              strategicImperatives: "Market share in MIGS segment",                  researchQuestions: "Does hybrid tip design reduce phaco time in dense cataracts?",             potentialClaims: "Fastest aspiration rate in its class",               totalIndirect: "55,000",  totalDirect: "210,000", totalCost: "265,000", total2027Indirect: "27,500", total2027Direct: "105,000",total2027Cost: "132,500", primaryEndpoint: "Mean phaco time (seconds)",          secondaryEndpoint: "CDE (cumulative dissipated energy)", otherEndpoints: "Surgeon ergonomics rating",             studyDesign: "Comparative", proposedStatistics: "Phaco time powered at 90%, α=0.05",sampleSize: "200",  pos: "80%",  region: "USA, Japan",             startDate: "Jun 2024",  endDate: "Jun 2026", comments: "",                          portfolio: "Specialty Equipment" },
+  { uid: "RXG005", franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 2", areaPrioritization: "Medium", pathway: "AIT",          rtiYear: "2026", atpProduct: "Centurion",                project: "Centurion Silver",                 strategicImperatives: "Reduce surge-related complications",             researchQuestions: "Efficacy of Active Fluidics vs. gravity in surge prevention",              potentialClaims: "Reduce surge by 40% vs. predicate",                  totalIndirect: "30,000",  totalDirect: "85,000",  totalCost: "115,000", total2027Indirect: "30,000", total2027Direct: "85,000", total2027Cost: "115,000", primaryEndpoint: "Peak surge amplitude (mmHg)",       secondaryEndpoint: "IOP fluctuation range intra-op",      otherEndpoints: "Post-op CDVA at day 1",                 studyDesign: "Controlled", proposedStatistics: "Surge amplitude powered at 80%", sampleSize: "150",  pos: "70%",  region: "USA, Canada",            startDate: "Feb 2026",  endDate: "Feb 2028", comments: "",                          portfolio: "Specialty Equipment" },
+  { uid: "RXG006", franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 2", areaPrioritization: "High",   pathway: "IIT",          rtiYear: "2025", atpProduct: "Centurion",                project: "Centurion IOP Stability",          strategicImperatives: "Establish IOP control leadership",              researchQuestions: "IOP fluctuation during phaco with Active Fluidics vs. standard",           potentialClaims: "Best-in-class IOP stability during phaco",           totalIndirect: "35,000",  totalDirect: "110,000", totalCost: "145,000", total2027Indirect: "17,500", total2027Direct: "55,000", total2027Cost: "72,500",  primaryEndpoint: "IOP SD during phaco (mmHg)",        secondaryEndpoint: "CDVA at day 30",                      otherEndpoints: "Anterior chamber stability score",      studyDesign: "Parallel",   proposedStatistics: "IOP SD powered at 80%, α=0.05",  sampleSize: "160",  pos: "72%",  region: "USA",                    startDate: "Apr 2025",  endDate: "Oct 2026", comments: "",                          portfolio: "Specialty Equipment" },
+  { uid: "CE123",  franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 2", areaPrioritization: "Medium", pathway: "AIT",          rtiYear: "2024", atpProduct: "OVD",                      project: "OVD Chamber Maintenance",          strategicImperatives: "Protect anterior segment integrity",             researchQuestions: "Does cohesive OVD outperform dispersive in anterior chamber maintenance?",  potentialClaims: "Maintains anterior chamber depth throughout",        totalIndirect: "22,000",  totalDirect: "68,000",  totalCost: "90,000",  total2027Indirect: "11,000", total2027Direct: "34,000", total2027Cost: "45,000",  primaryEndpoint: "ACD stability during capsulorhexis", secondaryEndpoint: "Endothelial cell loss at 1 month",    otherEndpoints: "OVD removal time",                      studyDesign: "Crossover",  proposedStatistics: "ACD powered at 85%",             sampleSize: "100",  pos: "68%",  region: "Germany, France",        startDate: "Jan 2024",  endDate: "Dec 2025", comments: "Harmonized with EU registry", portfolio: "Cat/Vit Consumables & Visualization" },
+  { uid: "VCR041", franchise: "Vision Care",   area: "Dry Eye",  brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "Sponsored",    rtiYear: "2025", atpProduct: "Systane Ultra UD",         project: "Systane Ultra UD Relief",          strategicImperatives: "Lead single-dose dry eye segment",              researchQuestions: "Duration of relief with unit-dose Systane vs. multi-dose",                 potentialClaims: "24-hour dry eye symptom relief, single dose",        totalIndirect: "48,000",  totalDirect: "175,000", totalCost: "223,000", total2027Indirect: "48,000", total2027Direct: "175,000",total2027Cost: "223,000", primaryEndpoint: "OSDI score at 24 hours",            secondaryEndpoint: "Symptom-free hours (patient diary)",  otherEndpoints: "TBUT at 4 and 8 hours",                 studyDesign: "Comparative", proposedStatistics: "OSDI powered at 90%, α=0.05",    sampleSize: "250",  pos: "78%",  region: "USA, UK, Australia",     startDate: "Mar 2025",  endDate: "Mar 2027", comments: "Requires IRB in AUS",        portfolio: "Rx Dry Eye" },
+  { uid: "VCR039", franchise: "Vision Care",   area: "Dry Eye",  brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "IIT",          rtiYear: "2026", atpProduct: "Systane Hydration",        project: "Systane Hydration 6-Month",        strategicImperatives: "Drive patient loyalty via satisfaction data",   researchQuestions: "Patient satisfaction and re-purchase intent at 6 months",                  potentialClaims: "90% patient satisfaction at 6 months",               totalIndirect: "25,000",  totalDirect: "80,000",  totalCost: "105,000", total2027Indirect: "25,000", total2027Direct: "80,000", total2027Cost: "105,000", primaryEndpoint: "TSPS at 6 months",                  secondaryEndpoint: "Re-purchase intent questionnaire",    otherEndpoints: "OSDI at 3 and 6 months",                studyDesign: "Monadic",    proposedStatistics: "TSPS powered at 80%",            sampleSize: "180",  pos: "60%",  region: "USA",                    startDate: "Jan 2026",  endDate: "Dec 2027", comments: "Protocol in development",    portfolio: "Rx Dry Eye" },
+  { uid: "VCR044", franchise: "Vision Care",   area: "Glaucoma", brandRanking: "Tier 2", areaPrioritization: "Medium", pathway: "AIT",          rtiYear: "2025", atpProduct: "Travatan Z",               project: "Travatan Z Next Gen",              strategicImperatives: "Reduce dosing burden for glaucoma patients",    researchQuestions: "Non-inferiority of next-gen Travatan Z at reduced drop frequency",         potentialClaims: "Non-inferior IOP lowering with fewer drops",         totalIndirect: "60,000",  totalDirect: "240,000", totalCost: "300,000", total2027Indirect: "30,000", total2027Direct: "120,000",total2027Cost: "150,000", primaryEndpoint: "Mean IOP at week 12",               secondaryEndpoint: "% patients achieving IOP ≤18 mmHg",   otherEndpoints: "Medication adherence score",            studyDesign: "Parallel",   proposedStatistics: "IOP non-inferiority, Δ≤1.5 mmHg",sampleSize: "320",  pos: "74%",  region: "USA, Canada, Spain",     startDate: "May 2025",  endDate: "Nov 2027", comments: "",                          portfolio: "Rx Glaucoma" },
+  { uid: "PHR012", franchise: "Pharmaceutical",area: "Retina",   brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "Sponsored",    rtiYear: "2024", atpProduct: "Aflibercept",              project: "Aflibercept Extended Dosing",      strategicImperatives: "Establish extended dosing superiority in nAMD", researchQuestions: "52-week BCVA outcomes with q12w vs. q8w aflibercept",                      potentialClaims: "Vision gain ≥15 ETDRS letters at 52 weeks",          totalIndirect: "120,000", totalDirect: "580,000", totalCost: "700,000", total2027Indirect: "60,000", total2027Direct: "290,000",total2027Cost: "350,000", primaryEndpoint: "BCVA gain ≥15 letters at 52 weeks", secondaryEndpoint: "CST reduction at 24 weeks",           otherEndpoints: "Injection frequency, PRN switch rate",  studyDesign: "Comparative", proposedStatistics: "BCVA powered at 90%, α=0.05",    sampleSize: "400",  pos: "85%",  region: "USA, EU, Japan",         startDate: "Feb 2024",  endDate: "Apr 2027", comments: "",                          portfolio: "Ocular Health" },
+  { uid: "PHR015", franchise: "Pharmaceutical",area: "Retina",   brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "IIT",          rtiYear: "2026", atpProduct: "Aflibercept HD",           project: "Aflibercept HD Injection",         strategicImperatives: "Reduce treatment burden in retinal disease",    researchQuestions: "Safety and efficacy of high-dose aflibercept at q16w interval",            potentialClaims: "Reduce injection burden to q16w",                    totalIndirect: "95,000",  totalDirect: "420,000", totalCost: "515,000", total2027Indirect: "95,000", total2027Direct: "420,000",total2027Cost: "515,000", primaryEndpoint: "Injection-free interval at 52 weeks",secondaryEndpoint: "BCVA change from baseline at 52w",    otherEndpoints: "CST, safety & tolerability",            studyDesign: "Controlled", proposedStatistics: "Injection interval powered at 85%",sampleSize: "350",  pos: "70%",  region: "USA, Germany, Japan",    startDate: "Jun 2026",  endDate: "Jun 2029", comments: "Awaiting HD formulation sign-off", portfolio: "Ocular Health" },
+  { uid: "PHR018", franchise: "Pharmaceutical",area: "Glaucoma", brandRanking: "Tier 2", areaPrioritization: "Medium", pathway: "AIT",          rtiYear: "2026", atpProduct: "Simbrinza",                project: "Simbrinza BID Protocol",           strategicImperatives: "Strengthen IOP reduction portfolio",            researchQuestions: "IOP reduction efficacy of Simbrinza BID vs. TID at 12 months",            potentialClaims: "IOP reduction ≥30% from baseline at 12M",            totalIndirect: "45,000",  totalDirect: "160,000", totalCost: "205,000", total2027Indirect: "45,000", total2027Direct: "160,000",total2027Cost: "205,000", primaryEndpoint: "% IOP reduction at 12 months",      secondaryEndpoint: "Mean diurnal IOP at 6 months",        otherEndpoints: "Tolerability and adherence rates",      studyDesign: "Parallel",   proposedStatistics: "IOP reduction powered at 80%",   sampleSize: "280",  pos: "65%",  region: "USA, Brazil",            startDate: "Mar 2026",  endDate: "Mar 2028", comments: "BID label change needed",    portfolio: "Rx Glaucoma" },
+  { uid: "CE119",  franchise: "Surgical",      area: "Cataract", brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "IIT",          rtiYear: "2024", atpProduct: "AcrySof IQ Vivity+",      project: "AcrySof IQ Vivity+ EDOF",         strategicImperatives: "Capture premium IOL market with EDOF",          researchQuestions: "Full visual range outcomes and dysphotopsia rates vs. monofocal",          potentialClaims: "Full range of vision without dysphotopsia",          totalIndirect: "70,000",  totalDirect: "310,000", totalCost: "380,000", total2027Indirect: "35,000", total2027Direct: "155,000",total2027Cost: "190,000", primaryEndpoint: "UDVA, UIVA, UNVA at 3 months",     secondaryEndpoint: "Dysphotopsia questionnaire score",    otherEndpoints: "Patient-reported spectacle independence",studyDesign: "Comparative", proposedStatistics: "UDVA powered at 90%",            sampleSize: "240",  pos: "82%",  region: "USA, Germany, India",    startDate: "Jul 2024",  endDate: "Jan 2027", comments: "Harmonized with CE marking",  portfolio: "Intraocular Lenses (IOL)" },
+  { uid: "CE121",  franchise: "Surgical",      area: "Cataract", brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "Sponsored",    rtiYear: "2024", atpProduct: "AcrySof IQ PanOptix",     project: "AcrySof IQ PanOptix Independence", strategicImperatives: "Drive spectacle independence messaging",         researchQuestions: "Rate of spectacle independence at 12 months in trifocal IOL patients",     potentialClaims: "Spectacle independence in 85% of patients",          totalIndirect: "85,000",  totalDirect: "360,000", totalCost: "445,000", total2027Indirect: "42,500", total2027Direct: "180,000",total2027Cost: "222,500", primaryEndpoint: "% spectacle-free at 12 months",    secondaryEndpoint: "UDVA, UIVA, UNVA at 6 months",        otherEndpoints: "Patient satisfaction index",            studyDesign: "Monadic",    proposedStatistics: "Spectacle independence powered at 90%", sampleSize: "300", pos: "88%",  region: "USA, UK, France",        startDate: "Jan 2024",  endDate: "Jun 2026", comments: "",                          portfolio: "Intraocular Lenses (IOL)" },
+  { uid: "VCR051", franchise: "Vision Care",   area: "Dry Eye",  brandRanking: "Tier 1", areaPrioritization: "High",   pathway: "Sponsored",    rtiYear: "2025", atpProduct: "Pataday Once Daily",       project: "Pataday Seasonal Allergy",         strategicImperatives: "Own peak allergy season narrative",             researchQuestions: "Symptom-free days during peak allergy season with Pataday OD vs. placebo", potentialClaims: "Symptom-free days ≥5 of 7 at peak season",          totalIndirect: "50,000",  totalDirect: "190,000", totalCost: "240,000", total2027Indirect: "50,000", total2027Direct: "190,000",total2027Cost: "240,000", primaryEndpoint: "Symptom-free days/week at peak season",secondaryEndpoint: "Ocular itching VAS at day 14",       otherEndpoints: "Rescue medication use",                 studyDesign: "Controlled", proposedStatistics: "Symptom-free days powered at 85%",sampleSize: "350",  pos: "80%",  region: "USA, Canada",            startDate: "Feb 2025",  endDate: "Nov 2026", comments: "",                          portfolio: "Rx Dry Eye" },
+  { uid: "RXG009", franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 2", areaPrioritization: "Medium", pathway: "IIT",          rtiYear: "2026", atpProduct: "Centurion Active Sentry",  project: "Active Sentry Zero-Surge",         strategicImperatives: "Zero-surge as a clinical standard",             researchQuestions: "Can Active Sentry eliminate measurable surge events in routine phaco?",    potentialClaims: "Zero-surge phacoemulsification",                     totalIndirect: "28,000",  totalDirect: "92,000",  totalCost: "120,000", total2027Indirect: "28,000", total2027Direct: "92,000", total2027Cost: "120,000", primaryEndpoint: "Surge events per case (n=0)",       secondaryEndpoint: "IOP peaks intra-op",                  otherEndpoints: "CDVA at day 7",                         studyDesign: "Controlled", proposedStatistics: "Surge count powered at 80%",     sampleSize: "140",  pos: "62%",  region: "USA",                    startDate: "Apr 2026",  endDate: "Oct 2027", comments: "Prototype instrument required",portfolio: "Specialty Equipment" },
+  { uid: "PHR022", franchise: "Pharmaceutical",area: "Retina",   brandRanking: "Tier 2", areaPrioritization: "Medium", pathway: "Sponsored",    rtiYear: "2025", atpProduct: "Ozurdex",                  project: "Ozurdex PRN Protocol",             strategicImperatives: "Flexible dosing for real-world DME management", researchQuestions: "Anatomic and functional outcomes with PRN Ozurdex vs. fixed dosing",       potentialClaims: "Anatomic resolution at 6M with PRN dosing",          totalIndirect: "55,000",  totalDirect: "220,000", totalCost: "275,000", total2027Indirect: "55,000", total2027Direct: "220,000",total2027Cost: "275,000", primaryEndpoint: "CST normalization at 6 months",     secondaryEndpoint: "BCVA change from baseline at 6M",     otherEndpoints: "Injection frequency, IOP excursions",   studyDesign: "Parallel",   proposedStatistics: "CST powered at 80%, α=0.05",     sampleSize: "220",  pos: "71%",  region: "USA, Italy, Spain",      startDate: "Sep 2025",  endDate: "Sep 2027", comments: "",                          portfolio: "Ocular Health" },
+  { uid: "CE131",  franchise: "Surgical",      area: "CRCX",     brandRanking: "Tier 3", areaPrioritization: "Low",    pathway: "AIT",          rtiYear: "2026", atpProduct: "MIVS 27g",                 project: "MIVS 27g Plus Hypotony",           strategicImperatives: "Reduce vitreoretinal post-op complications",    researchQuestions: "Incidence of post-op hypotony with 27g vs. 25g MIVS instrumentation",     potentialClaims: "Lowest incidence of post-op hypotony",               totalIndirect: "18,000",  totalDirect: "55,000",  totalCost: "73,000",  total2027Indirect: "18,000", total2027Direct: "55,000", total2027Cost: "73,000",  primaryEndpoint: "Hypotony rate at day 7 (IOP <6 mmHg)",secondaryEndpoint: "IOP at day 1, 7, and 30",             otherEndpoints: "Vitreous prolapse incidence",            studyDesign: "Comparative", proposedStatistics: "Hypotony rate powered at 80%",   sampleSize: "160",  pos: "58%",  region: "Germany, Japan",         startDate: "Jun 2026",  endDate: "Dec 2027", comments: "Harmonized with JSCR",       portfolio: "Cat/Vit Consumables & Visualization" },
 ];
 
-const emptyDraft: Idea = { uid: "", franchise: "", area: "", pathway: "", brand: "", type: "", project: "", claim: "", status: "" };
+const emptyDraft: Idea = { uid: "", franchise: "", area: "", brandRanking: "", areaPrioritization: "", pathway: "", rtiYear: "", atpProduct: "", project: "", strategicImperatives: "", researchQuestions: "", potentialClaims: "", totalIndirect: "", totalDirect: "", totalCost: "", total2027Indirect: "", total2027Direct: "", total2027Cost: "", primaryEndpoint: "", secondaryEndpoint: "", otherEndpoints: "", studyDesign: "", proposedStatistics: "", sampleSize: "", pos: "", region: "", startDate: "", endDate: "", comments: "", portfolio: "" };
 
 const isLocked = (_row: Idea) => false;
 const LOCK_REASON = "";
@@ -52,16 +85,59 @@ type SortDir = "asc" | "desc" | null;
 type Column = { key: keyof Idea; label: string; options?: string[] };
 
 const columns: Column[] = [
-  { key: "uid",      label: "UID" },
-  { key: "franchise",label: "FRANCHISE",                options: ["Surgical", "Vision Care", "Pharmaceutical"] },
-  { key: "area",     label: "THERAPEUTIC AREA",         options: ["CRCX", "Retina", "Glaucoma", "Cataract", "Dry Eye"] },
-  { key: "pathway",  label: "RESEARCH PATHWAY",         options: ["IIT", "AIT", "Test created", "Sponsored"] },
-  { key: "brand",    label: "PRODUCT FAMILY (BRAND)" },
-  { key: "type",     label: "PRODUCT TYPE",             options: ["ATP - R&D", "Tier 2 / 3 R&D", "Contact Lens", "Clinical"] },
-  { key: "project",  label: "PRODUCT / PROJECT" },
-  { key: "claim",    label: "TARGET ASPIRATIONAL CLAIM" },
-  { key: "status",   label: "STATUS",                   options: ["Draft", "Submitted", "Approved", "Harmonized"] },
+  { key: "uid",                  label: "UID" },
+  { key: "franchise",            label: "FRANCHISE",                                options: ["Surgical", "Vision Care", "Pharmaceutical"] },
+  { key: "area",                 label: "THERAPEUTIC AREA",                         options: ["CRCX", "Retina", "Glaucoma", "Cataract", "Dry Eye"] },
+  { key: "brandRanking",         label: "BRAND RANKING" },
+  { key: "areaPrioritization",   label: "THERAPEUTIC AREA PRIORITIZATION" },
+  { key: "pathway",              label: "RESEARCH PATHWAY",                         options: ["IIT", "AIT", "Test created", "Sponsored"] },
+  { key: "rtiYear",              label: "RTI YEAR (WHEN STUDY STARTS)" },
+  { key: "atpProduct",           label: "ATP OR KEY PRODUCT" },
+  { key: "project",              label: "PRODUCT OR PROJECT" },
+  { key: "strategicImperatives", label: "STRATEGIC IMPERATIVES" },
+  { key: "researchQuestions",    label: "RESEARCH QUESTIONS / DETAILS" },
+  { key: "potentialClaims",      label: "POTENTIAL CLAIMS" },
+  { key: "totalIndirect",        label: "TOTAL ESTIMATED INDIRECT ($)" },
+  { key: "totalDirect",          label: "TOTAL ESTIMATED DIRECT ($)" },
+  { key: "totalCost",            label: "TOTAL STUDY COST ($)" },
+  { key: "total2027Indirect",    label: "TOTAL ESTIMATED 2027 INDIRECT ($)" },
+  { key: "total2027Direct",      label: "TOTAL ESTIMATED 2027 DIRECT ($)" },
+  { key: "total2027Cost",        label: "TOTAL STUDY 2027 COST ($)" },
+  { key: "primaryEndpoint",      label: "POTENTIAL PRIMARY ENDPOINT" },
+  { key: "secondaryEndpoint",    label: "POTENTIAL SECONDARY ENDPOINT" },
+  { key: "otherEndpoints",       label: "POTENTIAL OTHER ENDPOINTS" },
+  { key: "studyDesign",          label: "PROPOSED STUDY DESIGN",                    options: ["Monadic", "Comparative", "Controlled", "Masked", "Crossover", "Parallel"] },
+  { key: "proposedStatistics",   label: "PROPOSED STATISTICS" },
+  { key: "sampleSize",           label: "POTENTIAL SAMPLE SIZE" },
+  { key: "pos",                  label: "POS" },
+  { key: "region",               label: "REGION / COUNTRY ACCEPTING SUBMISSION" },
+  { key: "startDate",            label: "START DATE" },
+  { key: "endDate",              label: "END DATE (CSR)" },
+  { key: "comments",             label: "COMMENTS" },
+  { key: "portfolio",            label: "PORTFOLIO",                                options: [...PORTFOLIOS] },
 ];
+
+// The tab strip switches which slice of the schema is on screen — not which rows.
+// `columns` above stays the single source of truth for labels and editors; a view is
+// just an ordered list of keys into it, so the two can never drift apart.
+type ViewKey = "Franchise" | "Evidence Function";
+
+const VIEW_KEYS: Record<ViewKey, (keyof Idea)[]> = {
+  "Franchise": [
+    "uid", "franchise", "area", "brandRanking", "areaPrioritization", "pathway",
+    "rtiYear", "atpProduct", "project", "strategicImperatives", "researchQuestions", "potentialClaims",
+  ],
+  "Evidence Function": [
+    "uid", "totalIndirect", "totalDirect", "totalCost", "total2027Indirect", "total2027Direct",
+    "total2027Cost", "primaryEndpoint", "secondaryEndpoint", "otherEndpoints", "studyDesign",
+    "proposedStatistics", "sampleSize", "pos", "region", "startDate", "endDate", "comments", "portfolio",
+  ],
+};
+
+const VIEWS = Object.keys(VIEW_KEYS) as ViewKey[];
+
+const columnByKey = new Map(columns.map(c => [c.key, c]));
+const viewColumns = (v: ViewKey): Column[] => VIEW_KEYS[v].map(k => columnByKey.get(k)!);
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
@@ -76,6 +152,8 @@ function GridCell({
   placeholder,
   indicator,
   locked,
+  swapClass = "",
+  swapStyle,
   onSelect,
   onStartEdit,
   onCommit,
@@ -90,6 +168,8 @@ function GridCell({
   placeholder?: string;
   indicator?: "dirty" | "saving" | "error" | null;
   locked?: boolean;
+  swapClass?: string;
+  swapStyle?: React.CSSProperties;
   onSelect: () => void;
   onStartEdit: () => void;
   onCommit: (v: string, move: MoveDir) => void;
@@ -101,7 +181,7 @@ function GridCell({
   if (editing) {
     if (col.options) {
       return (
-        <td className="p-0 border-r border-gray-100/80">
+        <td className="p-0" style={{ borderRight: "1px solid rgba(0,0,0,0.05)" }}>
           <select
             autoFocus
             defaultValue={value}
@@ -110,7 +190,8 @@ function GridCell({
             onKeyDown={e => {
               if (e.key === "Escape") { e.preventDefault(); onCancel(); }
             }}
-            className="w-full px-4 py-[11px] text-[13px] bg-white outline-none ring-2 ring-inset ring-[#0d2d6b]"
+            className="w-full px-4 py-[10px] text-[13px] bg-white outline-none"
+            style={{ boxShadow: "0 0 0 2px rgba(13,45,107,0.55) inset" }}
           >
             <option value="">—</option>
             {col.options.map(o => (
@@ -121,7 +202,7 @@ function GridCell({
       );
     }
     return (
-      <td className="p-0 border-r border-gray-100/80">
+      <td className="p-0" style={{ borderRight: "1px solid rgba(0,0,0,0.05)" }}>
         <input
           autoFocus
           key={seed}
@@ -134,59 +215,54 @@ function GridCell({
             else if (e.key === "Tab") { e.preventDefault(); onCommit(el.value, "right"); }
             else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
           }}
-          className="w-full px-4 py-[11px] text-[13px] bg-white outline-none ring-2 ring-inset ring-[#0d2d6b]"
+          className="w-full px-4 py-[10px] text-[13px] bg-white outline-none"
+          style={{ boxShadow: "0 0 0 2px rgba(13,45,107,0.55) inset" }}
         />
       </td>
     );
   }
-
-  const statusColors: Record<string, string> = {
-    Draft:      "bg-gray-100 text-gray-500",
-    Submitted:  "bg-blue-50 text-blue-600",
-    Approved:   "bg-green-50 text-green-700",
-    Harmonized: "bg-amber-50 text-amber-700",
-  };
-
-  const isStatus = col.key === "status";
 
   return (
     <td
       onClick={onSelect}
       onDoubleClick={locked ? onLocked : onStartEdit}
       title={locked ? LOCK_REASON : undefined}
-      className={`px-4 py-[11px] select-none whitespace-nowrap border-r border-gray-100/80 text-[13px] leading-snug transition-colors duration-100 ${
+      style={{
+        ...swapStyle,
+        borderRight: "1px solid rgba(0,0,0,0.05)",
+        boxShadow: active
+          ? locked
+            ? "0 0 0 2px rgba(156,163,175,0.5) inset"
+            : "0 0 0 2px rgba(13,45,107,0.55) inset"
+          : undefined,
+        backgroundColor: active
+          ? locked ? "rgba(156,163,175,0.06)" : "rgba(13,45,107,0.03)"
+          : undefined,
+      }}
+      className={`${swapClass} px-4 py-[10px] select-none whitespace-nowrap text-[13px] leading-snug transition-colors duration-100 ${
         locked ? "cursor-not-allowed" : "cursor-cell"
       } ${
-        isFirst ? (locked ? "text-gray-500 font-medium" : "text-gray-800 font-medium") : locked ? "text-gray-400" : "text-gray-600"
-      } ${
-        active
-          ? locked
-            ? "ring-2 ring-inset ring-gray-300 bg-gray-400/[0.06]"
-            : "ring-2 ring-inset ring-[#0d2d6b] bg-[#0d2d6b]/[0.04]"
-          : ""
+        isFirst
+          ? locked ? "font-medium" : "font-medium text-gray-800"
+          : locked ? "" : ""
       }`}
     >
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1.5" style={{ color: locked ? "#aeaeb2" : isFirst ? "#1c1c1e" : "#3c3c43" }}>
         {isFirst && locked && (
-          <Lock size={11} className="text-gray-400 shrink-0" strokeWidth={2} />
+          <Lock size={11} className="shrink-0" style={{ color: "#aeaeb2" }} strokeWidth={2} />
         )}
-        {isStatus && value ? (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11.5px] font-medium ${statusColors[value] ?? "bg-gray-100 text-gray-500"}`}>
-            {value}
-          </span>
-        ) : value !== "" ? value : (
-          <span className="text-gray-400">{placeholder}</span>
+        {value !== "" ? value : (
+          <span style={{ color: "#c7c7cc" }}>{placeholder}</span>
         )}
-        {!locked && col.options && active && !isStatus && <Caret size={11} className="text-gray-400" />}
-        {!locked && isStatus && active && <Caret size={11} className="text-gray-400" />}
+        {!locked && col.options && active && <Caret size={10} strokeWidth={2} style={{ color: "#aeaeb2" }} />}
         {indicator === "saving" && (
-          <Loader2 size={10} className="animate-spin text-amber-400 shrink-0" />
+          <Loader2 size={10} className="animate-spin shrink-0" style={{ color: "#f59e0b" }} />
         )}
         {indicator === "dirty" && (
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" title="Unsaved changes" />
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: "#f59e0b" }} title="Unsaved changes" />
         )}
         {indicator === "error" && (
-          <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" title="Save failed" />
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: "#ef4444" }} title="Save failed" />
         )}
       </span>
     </td>
@@ -245,15 +321,25 @@ function RowMenu({
     <div className="relative">
       <button
         onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30"
+        className="p-1.5 rounded-lg active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30"
+        style={{ color: "#8e8e93" }}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.06)")}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = "")}
       >
-        <MoreHorizontal size={15} />
+        <MoreHorizontal size={14} />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="pop-in surface-pop absolute right-0 top-full mt-1.5 z-50 w-52 bg-white border border-gray-200/80 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] py-1.5 overflow-hidden">
+          <div className="pop-in surface-pop absolute right-0 top-full mt-1.5 z-50 w-52 rounded-[14px] py-1.5 overflow-hidden"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(20px) saturate(180%)",
+              border: "1px solid rgba(0,0,0,0.1)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)",
+            }}
+          >
             {locked && (
               <div className="flex items-center gap-2 px-3.5 py-1.5 mb-1 border-b border-gray-100 text-[11.5px] text-gray-400">
                 <Lock size={11} strokeWidth={2} />
@@ -283,97 +369,60 @@ type HistoryEvent = {
   actor: string;
   committee?: string;
   note?: string;
-  statusTo?: string;
 };
 
 const ACTORS = ["Dr. Sarah M.", "James L.", "Priya N.", "Tom R.", "Lisa C.", "Marcus W."];
 const COMMITTEES = ["Clinical Review", "Scientific Committee", "Portfolio Board", "Budget Panel"];
 
 function generateHistory(row: Idea): HistoryEvent[] {
-  // Seed using UID chars for determinism
   const seed = row.uid.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const pick = <T,>(arr: T[], offset = 0) => arr[(seed + offset) % arr.length];
-
-  const statusChain: string[] = [];
-  const map: Record<string, string[]> = {
-    Draft:      ["Draft"],
-    Submitted:  ["Draft", "Submitted"],
-    Approved:   ["Draft", "Submitted", "Approved"],
-    Harmonized: ["Draft", "Submitted", "Approved", "Harmonized"],
-  };
-  (map[row.status] ?? ["Draft"]).forEach(s => statusChain.push(s));
 
   const baseYear = 2024;
   const baseMonth = ((seed % 10) + 1);
 
-  const events: HistoryEvent[] = [];
+  const fmt = (offset: number) => {
+    const month = String(Math.min(baseMonth + offset, 12)).padStart(2, "0");
+    const day = String(((seed * (offset + 1)) % 25) + 1).padStart(2, "0");
+    const hour = String(((seed + offset * 3) % 10) + 8).padStart(2, "0");
+    const min = String((seed * (offset + 2)) % 60).padStart(2, "0");
+    return { date: `${baseYear}-${month}-${day}`, time: `${hour}:${min}` };
+  };
 
-  statusChain.forEach((status, i) => {
-    const month = String(Math.min(baseMonth + i, 12)).padStart(2, "0");
-    const day = String(((seed * (i + 1)) % 25) + 1).padStart(2, "0");
-    const hour = String(((seed + i * 3) % 10) + 8).padStart(2, "0");
-    const min = String((seed * (i + 2)) % 60).padStart(2, "0");
-    const date = `${baseYear}-${month}-${day}`;
-    const time = `${hour}:${min}`;
+  const events: HistoryEvent[] = [
+    {
+      id: `${row.uid}-create`,
+      ...fmt(0),
+      action: "Idea created",
+      actor: pick(ACTORS, 0),
+      note: `Initial draft submitted for ${row.project}. Research pathway: ${row.pathway}.`,
+    },
+    {
+      id: `${row.uid}-edit1`,
+      ...fmt(1),
+      action: "Potential claims updated",
+      actor: pick(ACTORS, 1),
+      note: `"${row.potentialClaims.slice(0, 60)}${row.potentialClaims.length > 60 ? "…" : ""}"`,
+    },
+    {
+      id: `${row.uid}-edit2`,
+      ...fmt(2),
+      action: "Research questions revised",
+      actor: pick(ACTORS, 2),
+      committee: pick(COMMITTEES, 0),
+    },
+    {
+      id: `${row.uid}-edit3`,
+      ...fmt(3),
+      action: "Study design confirmed",
+      actor: pick(ACTORS, 3),
+      note: `Design set to ${row.studyDesign || "TBD"}.`,
+    },
+  ];
 
-    if (i === 0) {
-      events.push({
-        id: `${row.uid}-create`,
-        date, time,
-        action: "Idea created",
-        actor: pick(ACTORS, 0),
-        note: `Initial draft submitted for ${row.project}. Research pathway: ${row.pathway}.`,
-        statusTo: "Draft",
-      });
-      // Add a field edit event
-      events.push({
-        id: `${row.uid}-edit1`,
-        date: `${baseYear}-${month}-${String(Math.min(parseInt(day) + 2, 28)).padStart(2, "0")}`,
-        time: `${String(((seed + 7) % 10) + 9).padStart(2, "0")}:${String((seed * 3) % 60).padStart(2, "0")}`,
-        action: "Target claim updated",
-        actor: pick(ACTORS, 1),
-        note: `"${row.claim.slice(0, 60)}${row.claim.length > 60 ? "…" : ""}"`,
-      });
-    } else {
-      events.push({
-        id: `${row.uid}-status-${i}`,
-        date, time,
-        action: `Status changed to ${status}`,
-        actor: pick(ACTORS, i + 2),
-        committee: pick(COMMITTEES, i),
-        statusTo: status,
-      });
-    }
-  });
-
-  // Most recent first
   return events.reverse();
 }
 
-// ─── Shared status system ──────────────────────────────────────────────────────
-// One source of truth for status color so pills, dots, and timelines stay in sync.
-type StatusMeta = { dot: string; text: string; soft: string };
-const STATUS_META: Record<string, StatusMeta> = {
-  Draft:      { dot: "#9ca3af", text: "#4b5563", soft: "#f4f4f5" },
-  Submitted:  { dot: "#3b82f6", text: "#1d4ed8", soft: "#eff6ff" },
-  Approved:   { dot: "#10b981", text: "#047857", soft: "#ecfdf5" },
-  Harmonized: { dot: "#f59e0b", text: "#b45309", soft: "#fffbeb" },
-};
-const statusMeta = (s: string): StatusMeta => STATUS_META[s] ?? { dot: "#9ca3af", text: "#4b5563", soft: "#f4f4f5" };
-
-function StatusPill({ status, size = "md" }: { status: string; size?: "sm" | "md" }) {
-  const m = statusMeta(status);
-  const pad = size === "sm" ? "px-2 py-[3px] text-[11px] gap-1.5" : "px-2.5 py-1 text-[12px] gap-2";
-  return (
-    <span
-      className={`inline-flex items-center rounded-full font-medium ${pad}`}
-      style={{ backgroundColor: m.soft, color: m.text }}
-    >
-      <span className="rounded-full" style={{ width: 6, height: 6, backgroundColor: m.dot }} />
-      {status}
-    </span>
-  );
-}
 
 // ─── Idea Detail Panel ─────────────────────────────────────────────────────────
 
@@ -417,11 +466,39 @@ function IdeaDetailPanel({
   // The specification reads like a calm, iOS-Settings-style list — label left, value right,
   // separated by hairlines. No colored chips, no all-caps eyebrow on every field.
   const spec: { label: string; value: string }[] = [
-    { label: "Franchise",         value: row.franchise },
-    { label: "Therapeutic area",  value: row.area },
-    { label: "Research pathway",  value: row.pathway },
-    { label: "Product family",    value: row.brand },
-    { label: "Product type",      value: row.type },
+    { label: "Portfolio",                    value: row.portfolio },
+    { label: "Franchise",                    value: row.franchise },
+    { label: "Therapeutic area",             value: row.area },
+    { label: "Brand ranking",                value: row.brandRanking },
+    { label: "TA prioritization",            value: row.areaPrioritization },
+    { label: "Research pathway",             value: row.pathway },
+    { label: "RTI year",                     value: row.rtiYear },
+    { label: "ATP or key product",           value: row.atpProduct },
+    { label: "Product or project",           value: row.project },
+    { label: "Strategic imperatives",        value: row.strategicImperatives },
+    { label: "Research questions / details", value: row.researchQuestions },
+  ];
+
+  const endpoints: { label: string; value: string }[] = [
+    { label: "Primary endpoint",   value: row.primaryEndpoint },
+    { label: "Secondary endpoint", value: row.secondaryEndpoint },
+    { label: "Other endpoints",    value: row.otherEndpoints },
+    { label: "Study design",       value: row.studyDesign },
+    { label: "Statistics",         value: row.proposedStatistics },
+    { label: "Sample size",        value: row.sampleSize },
+    { label: "POS",                value: row.pos },
+    { label: "Region / Country",   value: row.region },
+    { label: "Start date",         value: row.startDate },
+    { label: "End date (CSR)",     value: row.endDate },
+  ];
+
+  const financials: { label: string; value: string }[] = [
+    { label: "Total indirect ($)",      value: row.totalIndirect },
+    { label: "Total direct ($)",        value: row.totalDirect },
+    { label: "Total study cost ($)",    value: row.totalCost },
+    { label: "2027 indirect ($)",       value: row.total2027Indirect },
+    { label: "2027 direct ($)",         value: row.total2027Direct },
+    { label: "2027 study cost ($)",     value: row.total2027Cost },
   ];
 
   const governance: { label: string; value: string }[] = [
@@ -459,12 +536,13 @@ function IdeaDetailPanel({
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 mb-3">
                 <span className="font-mono text-[11px] tracking-[0.02em] text-gray-400">{row.uid}</span>
-                <span className="text-gray-200">·</span>
-                <StatusPill status={row.status} size="sm" />
                 {locked && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
-                    <Lock size={11} strokeWidth={2} /> Locked
-                  </span>
+                  <>
+                    <span className="text-gray-200">·</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                      <Lock size={11} strokeWidth={2} /> Locked
+                    </span>
+                  </>
                 )}
               </div>
               <h2 className="text-[26px] leading-[1.15] tracking-[-0.02em] text-gray-900 truncate">
@@ -489,10 +567,10 @@ function IdeaDetailPanel({
           <div className="rounded-2xl px-5 py-5" style={{ backgroundColor: `${NAVY}07` }}>
             <div className="flex items-center gap-1.5 mb-2.5">
               <Sparkles size={13} strokeWidth={2} style={{ color: NAVY }} />
-              <p className="text-[11px] font-medium tracking-[0.01em]" style={{ color: NAVY }}>Target aspirational claim</p>
+              <p className="text-[11px] font-medium tracking-[0.01em]" style={{ color: NAVY }}>Potential claims</p>
             </div>
             <p className="text-[19px] leading-[1.45] tracking-[-0.01em] text-gray-900">
-              {row.claim || <span className="text-gray-300">No claim defined yet.</span>}
+              {row.potentialClaims || <span className="text-gray-300">No claims defined yet.</span>}
             </p>
           </div>
 
@@ -514,7 +592,51 @@ function IdeaDetailPanel({
             </dl>
           </div>
 
-          {/* Governance — same rhythm, kept subordinate. */}
+          {/* Study design & endpoints */}
+          <div className="mt-7">
+            <p className="text-[12px] font-medium text-gray-400 mb-1">Study Design &amp; Endpoints</p>
+            <dl>
+              {endpoints.map((f, i) => (
+                <div
+                  key={f.label}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 text-right">
+                    {f.value || <span className="text-gray-300">—</span>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          {/* Financials */}
+          <div className="mt-7">
+            <p className="text-[12px] font-medium text-gray-400 mb-1">Financials</p>
+            <dl>
+              {financials.map((f, i) => (
+                <div
+                  key={f.label}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 text-right font-mono tabular-nums">
+                    {f.value || <span className="text-gray-300 font-sans">—</span>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          {/* Comments */}
+          {row.comments && (
+            <div className="mt-7">
+              <p className="text-[12px] font-medium text-gray-400 mb-1">Comments</p>
+              <p className="text-[13px] text-gray-700 leading-relaxed">{row.comments}</p>
+            </div>
+          )}
+
+          {/* Governance */}
           <div className="mt-7">
             <p className="text-[12px] font-medium text-gray-400 mb-1">Governance</p>
             <dl>
@@ -637,19 +759,16 @@ function IdeaHistoryPanel({
           ) : (
             <ol className="relative">
               {events.map((ev, i) => {
-                const isStatus = !!ev.statusTo;
-                const m = statusMeta(ev.statusTo ?? "");
-                const dotColor = isStatus ? m.dot : "#d1d5db";
                 const last = i === events.length - 1;
 
                 return (
                   <li key={ev.id} className="relative flex gap-4 pb-6 last:pb-0">
                     {/* Rail + node */}
                     <div className="relative shrink-0 flex justify-center" style={{ width: 12 }}>
-                      {!last && <span className="absolute top-3 bottom-[-24px] w-px bg-gray-150" style={{ backgroundColor: "#eceef1" }} />}
+                      {!last && <span className="absolute top-3 bottom-[-24px] w-px" style={{ backgroundColor: "#eceef1" }} />}
                       <span
                         className="relative mt-1 rounded-full ring-4 ring-white"
-                        style={{ width: isStatus ? 11 : 8, height: isStatus ? 11 : 8, backgroundColor: dotColor }}
+                        style={{ width: 8, height: 8, backgroundColor: "#d1d5db" }}
                       />
                     </div>
 
@@ -657,18 +776,13 @@ function IdeaHistoryPanel({
                     <div className="flex-1 min-w-0 -mt-0.5">
                       <div className="flex items-baseline justify-between gap-3">
                         <p className="text-[14px] text-gray-900 leading-snug">{ev.action}</p>
-                        <time className="shrink-0 text-[11.5px] text-gray-350 tabular-nums" style={{ color: "#aab0ba" }}>
+                        <time className="shrink-0 text-[11.5px] tabular-nums" style={{ color: "#aab0ba" }}>
                           {new Date(`${ev.date}T00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </time>
                       </div>
                       <p className="text-[12px] text-gray-400 mt-1">
                         {ev.actor}{ev.committee && <> · {ev.committee}</>} · {ev.time}
                       </p>
-                      {ev.statusTo && (
-                        <div className="mt-2">
-                          <StatusPill status={ev.statusTo} size="sm" />
-                        </div>
-                      )}
                       {ev.note && (
                         <p className="text-[13px] text-gray-500 mt-2 leading-relaxed">{ev.note}</p>
                       )}
@@ -678,6 +792,135 @@ function IdeaHistoryPanel({
               })}
             </ol>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Portfolio Side Panel ─────────────────────────────────────────────────────
+
+function PortfolioPanel({
+  rows,
+  active,
+  open,
+  onSelect,
+  onToggle,
+}: {
+  rows: Idea[];
+  active: string;
+  open: boolean;
+  onSelect: (p: string) => void;
+  onToggle: () => void;
+}) {
+  const counts = new Map<string, number>();
+  counts.set("All", rows.length);
+  for (const p of PORTFOLIOS) counts.set(p, 0);
+  for (const row of rows) {
+    if (row.portfolio) counts.set(row.portfolio, (counts.get(row.portfolio) ?? 0) + 1);
+  }
+
+  function PortfolioRow({ label, pKey }: { label: string; pKey: string }) {
+    const isActive = active === pKey;
+    const count = counts.get(pKey) ?? 0;
+    return (
+      <button
+        onClick={() => onSelect(pKey)}
+        title={label}
+        className={`relative w-full flex items-center gap-2 rounded-[9px] text-left transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30 ${
+          isActive
+            ? "text-white shadow-[0_1px_3px_rgba(13,45,107,0.25)]"
+            : "text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-[0_1px_3px_rgba(0,0,0,0.07)]"
+        }`}
+        style={{
+          minHeight: 33,
+          padding: open ? "6px 10px" : "6px 0",
+          backgroundColor: isActive ? NAVY : undefined,
+          justifyContent: open ? undefined : "center",
+        }}
+      >
+        {open ? (
+          <>
+            <span className={`text-[12.5px] leading-snug flex-1 min-w-0 truncate ${isActive ? "font-medium" : ""}`}>
+              {label}
+            </span>
+            <span
+              className={`shrink-0 text-[10.5px] tabular-nums rounded-full px-[6px] py-px font-semibold ${
+                isActive
+                  ? "bg-white/20 text-white"
+                  : count > 0
+                    ? "bg-gray-200/80 text-gray-500"
+                    : "text-gray-300"
+              }`}
+            >
+              {count > 0 ? count : "—"}
+            </span>
+          </>
+        ) : (
+          <span
+            className={`text-[10.5px] tabular-nums font-semibold ${
+              isActive ? "text-white" : count > 0 ? "text-gray-500" : "text-gray-300"
+            }`}
+          >
+            {count}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="relative shrink-0 flex flex-col overflow-hidden"
+      style={{
+        width: open ? 220 : 54,
+        transition: "width 0.3s cubic-bezier(0.16,1,0.3,1)",
+        backgroundColor: "#f4f4f6",
+        boxShadow: "1px 0 0 rgba(0,0,0,0.07)",
+      }}
+    >
+      {/* Header */}
+      <div className="shrink-0 flex items-center" style={{ height: 56 }}>
+        {open ? (
+          <div className="flex items-center justify-between w-full px-3 pr-2">
+            <div className="flex items-center gap-2 select-none">
+              <Layers size={12} strokeWidth={2.2} className="text-gray-400 shrink-0" />
+              <span className="text-[11px] font-semibold text-gray-400 tracking-[0.06em] uppercase">
+                Portfolio
+              </span>
+            </div>
+            <button
+              onClick={onToggle}
+              title="Collapse"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-black/[0.05] active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30"
+            >
+              <PanelCollapse size={13} strokeWidth={2} />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onToggle}
+            title="Expand portfolio panel"
+            className="w-full h-full flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0d2d6b]/30"
+          >
+            <Layers size={15} strokeWidth={1.9} />
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto pb-3" style={{ padding: open ? "0 8px 12px" : "0 6px 12px" }}>
+        {/* All portfolios */}
+        <PortfolioRow label="All portfolios" pKey="All" />
+
+        {/* Divider */}
+        <div className="my-2" style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }} />
+
+        {/* Individual portfolios */}
+        <div className="flex flex-col gap-[2px]">
+          {PORTFOLIOS.map(p => (
+            <PortfolioRow key={p} label={p} pKey={p} />
+          ))}
         </div>
       </div>
     </div>
@@ -694,7 +937,12 @@ function SortIcon({ dir }: { dir: SortDir }) {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("All");
+  const [portfolio, setPortfolio] = useState<string>("All");
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [view, setView] = useState<ViewKey>("Franchise");
+  // "out" = current columns leaving. dir is +1 when moving to a tab on the right.
+  const [swapping, setSwapping] = useState(false);
+  const [dir, setDir] = useState(1);
   const [search, setSearch] = useState("");
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
@@ -721,12 +969,59 @@ export default function App() {
   const rowsRef = useRef(rows);
   useEffect(() => { rowsRef.current = rows; }, [rows]);
 
-  const statusLabels = ["All", "Draft", "Submitted", "Approved", "Harmonized"] as const;
-  type TabLabel = typeof statusLabels[number];
-  const tabs = statusLabels.map(label => ({
-    label,
-    count: label === "All" ? rows.length : rows.filter(r => r.status === label).length,
-  }));
+  // Columns currently on screen. Everything index-based — the cursor, keyboard nav,
+  // commits — is relative to this list, not the full schema.
+  const cols = viewColumns(view);
+
+  // Tab underline slides between tabs, so we measure the active button's box.
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0 });
+  useEffect(() => {
+    const el = tabRefs.current[VIEWS.indexOf(view)];
+    if (el) setTabIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [view]);
+
+  const swapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (swapTimer.current) clearTimeout(swapTimer.current); }, []);
+
+  // Only the columns right of UID take part in the swap. UID is the spine: same column,
+  // same place, in both views — moving it would imply the rows themselves changed.
+  function swapProps(ci: number): { swapClass: string; swapStyle?: React.CSSProperties } {
+    if (ci === 0) return { swapClass: "" };
+    if (swapping) {
+      return {
+        swapClass: "",
+        swapStyle: {
+          transform: `translateX(${-dir * 20}px)`,
+          opacity: 0,
+          // Leaving is brisk and linear-ish; arriving is the slow settle. Asymmetry reads as intent.
+          transition: "transform 0.16s cubic-bezier(0.4, 0, 1, 1), opacity 0.14s ease",
+        },
+      };
+    }
+    return { swapClass: "col-enter" };
+  }
+
+  function switchView(next: ViewKey) {
+    if (next === view || swapping) return;
+    // Persist anything pending before the grid re-keys under a new column set.
+    if (dirtyRows.current.size > 0) flushDirty();
+    setIsEditing(false);
+    setActive(null);
+    setOpenFilter(null);
+    setDir(VIEWS.indexOf(next) > VIEWS.indexOf(view) ? 1 : -1);
+    setSwapping(true);
+    swapTimer.current = setTimeout(() => {
+      // Column indices change with the view — a sort on a now-hidden column would be invisible.
+      if (sortCol && !VIEW_KEYS[next].includes(sortCol as keyof Idea)) {
+        setSortCol(null);
+        setSortDir(null);
+      }
+      if (gridRef.current) gridRef.current.scrollLeft = 0;
+      setView(next);
+      setSwapping(false);
+    }, 140);
+  }
 
   function handleSort(key: string) {
     if (sortCol === key) {
@@ -798,13 +1093,16 @@ export default function App() {
   }, []);
 
   const filtered = rows.filter(row => {
-    const matchesTab = activeTab === "All" || row.status === activeTab;
+    const matchesPortfolio = portfolio === "All" || row.portfolio === portfolio;
+    // Search spans the whole record — finding a row by a value the current view hides is useful.
     const matchesSearch = !search || Object.values(row).some(v => v.toLowerCase().includes(search.toLowerCase()));
-    const matchesFilters = columns.every(col => {
+    // Column filters only apply while their column is visible, so a filter set in one
+    // view never silently hides rows in the other.
+    const matchesFilters = cols.every(col => {
       const sel = colFilters[col.key];
       return !sel || sel.length === 0 || sel.includes(row[col.key]);
     });
-    return matchesTab && matchesSearch && matchesFilters;
+    return matchesPortfolio && matchesSearch && matchesFilters;
   });
 
   const distinctValues = (key: keyof Idea) =>
@@ -818,7 +1116,7 @@ export default function App() {
     });
   }
 
-  const activeFilterCount = columns.filter(c => (colFilters[c.key]?.length ?? 0) > 0).length;
+  const activeFilterCount = cols.filter(c => (colFilters[c.key]?.length ?? 0) > 0).length;
 
   const sorted = sortCol
     ? [...filtered].sort((a, b) => {
@@ -855,7 +1153,7 @@ export default function App() {
   }, [active, isEditing]);
 
   function commitValue(r: number, c: number, val: string) {
-    const key = columns[c].key;
+    const key = cols[c].key;
     if (r === draftIndex) {
       const next = { ...draft, [key]: val };
       const trimmedUid = next.uid.trim();
@@ -891,7 +1189,7 @@ export default function App() {
   function move(dr: number, dc: number) {
     setActive(a => {
       const base = a ?? { r: 0, c: 0 };
-      return { r: clamp(base.r + dr, 0, totalRows - 1), c: clamp(base.c + dc, 0, columns.length - 1) };
+      return { r: clamp(base.r + dr, 0, totalRows - 1), c: clamp(base.c + dc, 0, cols.length - 1) };
     });
     setIsEditing(false);
   }
@@ -902,7 +1200,7 @@ export default function App() {
   }
 
   function currentValue(r: number, c: number) {
-    const key = columns[c].key;
+    const key = cols[c].key;
     return r === draftIndex ? draft[key] : (sorted[r]?.[key] ?? "");
   }
 
@@ -929,7 +1227,7 @@ export default function App() {
     else if (e.key === "ArrowRight") { e.preventDefault(); move(0, 1); }
     else if (e.key === "Tab") {
       e.preventDefault();
-      if (c < columns.length - 1) move(0, 1);
+      if (c < cols.length - 1) move(0, 1);
       else setActive({ r: clamp(r + 1, 0, totalRows - 1), c: 0 });
     }
     // Any key that would enter edit / clear a locked row is intercepted with an explanation.
@@ -946,7 +1244,7 @@ export default function App() {
     commitValue(r, c, val);
     setIsEditing(false);
     if (dir === "down") setActive({ r: clamp(r + 1, 0, totalRows - 1), c });
-    else if (dir === "right") setActive({ r, c: clamp(c + 1, 0, columns.length - 1) });
+    else if (dir === "right") setActive({ r, c: clamp(c + 1, 0, cols.length - 1) });
   }
 
   function duplicateRow(row: Idea) {
@@ -963,7 +1261,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f5f5f7]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
+    <div className="flex h-screen w-screen overflow-hidden" style={{ fontFamily: "'Open Sans', sans-serif", backgroundColor: "#f5f5f7" }}>
       <style>{`
         /* Materialize: blur + scale settle together so the surface reads as a material arriving. */
         @keyframes popIn {
@@ -972,6 +1270,16 @@ export default function App() {
         }
         .pop-in { animation: popIn 0.16s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; }
 
+        /* View swap: the incoming columns arrive from the side the tab moved toward, so the
+           tab strip and the content agree about direction. --enter carries the sign.
+           The UID column never gets this class — it's the spine the rows are identified by,
+           and animating it would claim something changed that didn't. */
+        @keyframes colEnter {
+          from { opacity: 0; transform: translateX(var(--enter, 24px)); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .col-enter { animation: colEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+
         /* §14 Reduced motion — swap material/spring motion for a gentle cross-fade, drop transforms. */
         @media (prefers-reduced-motion: reduce) {
           @keyframes popIn {
@@ -979,6 +1287,11 @@ export default function App() {
             to   { opacity: 1; }
           }
           .pop-in { animation: popIn 0.12s ease; }
+          @keyframes colEnter {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+          .col-enter { animation: colEnter 0.14s ease backwards; }
           *, *::before, *::after {
             transition-property: opacity, color, background-color, border-color !important;
             transition-duration: 0.12s !important;
@@ -1000,81 +1313,115 @@ export default function App() {
 
       {/* Sidebar */}
       <aside
-        className="flex flex-col items-center pt-6 pb-6 shrink-0"
-        style={{ width: 88, backgroundColor: NAVY }}
+        className="flex flex-col items-center pt-5 pb-5 shrink-0"
+        style={{
+          width: 80,
+          background: `linear-gradient(180deg, #0f3272 0%, ${NAVY_DARK} 100%)`,
+          boxShadow: "1px 0 0 rgba(0,0,0,0.12)",
+        }}
       >
         {/* Logo mark */}
         <div
-          className="flex items-center justify-center rounded-2xl text-white font-semibold select-none mb-8"
-          style={{ width: 48, height: 48, backgroundColor: "rgba(255,255,255,0.12)", fontSize: 12, letterSpacing: "0.04em" }}
+          className="flex items-center justify-center rounded-[14px] text-white font-bold select-none mb-7"
+          style={{
+            width: 44, height: 44,
+            background: "rgba(255,255,255,0.14)",
+            boxShadow: "0 1px 0 rgba(255,255,255,0.12) inset, 0 2px 8px rgba(0,0,0,0.18)",
+            fontSize: 11.5,
+            letterSpacing: "0.05em",
+          }}
         >
           Alcon
         </div>
 
         {/* Nav */}
         <nav className="flex flex-col items-center gap-0.5 w-full px-2">
-          <button
-            className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white active:scale-[0.96] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-            style={{ backgroundColor: "rgba(255,255,255,0.14)" }}
-          >
-            <Home size={20} strokeWidth={1.6} />
-            <span className="text-[10.5px] font-medium tracking-[0.01em]">Home</span>
-          </button>
-
-          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-            <FileText size={20} strokeWidth={1.6} />
-            <span className="text-[10.5px] tracking-[0.01em]">My Ideas</span>
-          </button>
-
-          <button className="flex flex-col items-center gap-[5px] w-full py-2.5 rounded-xl text-white/55 hover:text-white hover:bg-white/[0.07] active:scale-[0.96] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-            <HelpCircle size={20} strokeWidth={1.6} />
-            <span className="text-[10.5px] tracking-[0.01em]">Help</span>
-          </button>
+          {[
+            { icon: <Home size={19} strokeWidth={1.7} />, label: "Home", active: true },
+            { icon: <FileText size={19} strokeWidth={1.7} />, label: "Ideas", active: false },
+            { icon: <HelpCircle size={19} strokeWidth={1.7} />, label: "Help", active: false },
+          ].map(item => (
+            <button
+              key={item.label}
+              className={`flex flex-col items-center gap-1 w-full py-2.5 rounded-xl transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
+                item.active
+                  ? "text-white bg-white/[0.15] shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+                  : "text-white/45 hover:text-white/80 hover:bg-white/[0.07]"
+              }`}
+            >
+              {item.icon}
+              <span className="text-[9.5px] font-medium tracking-[0.02em]">{item.label}</span>
+            </button>
+          ))}
         </nav>
 
         {/* User identity */}
         <div className="flex-1" />
-        <div className="flex flex-col items-center gap-1.5">
+        <div className="flex flex-col items-center gap-1">
           <div
-            className="flex items-center justify-center rounded-full text-white text-[13px] font-semibold select-none"
-            style={{ width: 36, height: 36, backgroundColor: "rgba(255,255,255,0.15)" }}
+            className="flex items-center justify-center rounded-full text-white font-semibold select-none"
+            style={{
+              width: 34, height: 34,
+              background: "rgba(255,255,255,0.18)",
+              fontSize: 13,
+              letterSpacing: "-0.01em",
+              boxShadow: "0 0 0 2px rgba(255,255,255,0.1)",
+            }}
           >
             {currentUser.name.charAt(0)}
           </div>
-          <span className="text-[10.5px] font-medium text-white/80">{currentUser.name}</span>
-          <span className="text-[11px] text-white/40 tracking-[0.02em]">{currentUser.role}</span>
+          <span className="text-[9.5px] font-medium text-white/65 mt-0.5 tracking-[0.01em]">{currentUser.name}</span>
         </div>
       </aside>
 
+      <PortfolioPanel
+        rows={rows}
+        active={portfolio}
+        open={panelOpen}
+        onSelect={p => { setPortfolio(p); setActive(null); setIsEditing(false); }}
+        onToggle={() => setPanelOpen(o => !o)}
+      />
+
       {/* Main */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 overflow-hidden flex flex-col px-9 pt-8 pb-5 gap-5">
+        <main className="flex-1 overflow-hidden flex flex-col px-8 pt-7 pb-4 gap-4">
 
           {/* Page header */}
           <div className="flex items-center justify-between gap-4 shrink-0">
             <div>
-              <h2 className="text-[22px] font-semibold text-gray-900 tracking-[-0.015em] leading-tight">Ideas List</h2>
-              <p className="text-[13px] text-gray-400 mt-0.5 font-normal">Your latest research proposals and ideas</p>
+              <h2 className="text-[24px] font-semibold text-gray-900 tracking-[-0.022em] leading-tight">Ideas List</h2>
+              <p className="text-[13px] mt-0.5 font-normal" style={{ color: "#8e8e93" }}>
+                {portfolio === "All" ? "All portfolios" : portfolio}
+              </p>
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               {/* Search */}
               <div className="relative">
-                <Search size={13.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#8e8e93" }} />
                 <input
                   type="text"
-                  placeholder="Search ideas…"
+                  placeholder="Search…"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="pl-8 pr-3.5 h-9 w-56 border border-gray-200 rounded-lg text-[13px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0d2d6b]/25 focus:border-[#0d2d6b]/40 transition-shadow"
+                  className="pl-[30px] pr-3 h-[34px] w-52 rounded-[10px] text-[13px] placeholder:text-[#aeaeb2] focus:outline-none focus:ring-2 focus:ring-[#0d2d6b]/30 transition-all duration-150"
+                  style={{
+                    backgroundColor: "rgba(0,0,0,0.05)",
+                    border: "none",
+                    color: "#1c1c1e",
+                  }}
                 />
               </div>
               {/* Export */}
               <button
                 onClick={() => toast.success("Export started", { description: `${rows.length} ideas exported.` })}
-                className="flex items-center gap-1.5 h-9 px-4 border rounded-lg text-[13px] font-medium bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-gray-50/80 active:scale-[0.98] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30"
-                style={{ borderColor: "rgba(13,45,107,0.3)", color: NAVY }}
+                className="flex items-center gap-1.5 h-[34px] px-4 rounded-[10px] text-[13px] font-medium active:scale-[0.97] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30"
+                style={{
+                  backgroundColor: NAVY,
+                  color: "white",
+                  boxShadow: "0 1px 3px rgba(13,45,107,0.35), 0 1px 0 rgba(255,255,255,0.08) inset",
+                }}
               >
-                <Upload size={13} strokeWidth={2} />
+                <Upload size={12} strokeWidth={2.2} />
                 Export
               </button>
             </div>
@@ -1082,36 +1429,46 @@ export default function App() {
 
           {/* Tabs + pagination row */}
           <div className="flex items-center justify-between shrink-0">
-            <div className="flex items-center border-b border-gray-200 gap-0">
-              {tabs.map(tab => (
+            <div className="relative flex items-center gap-0" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+              {VIEWS.map((v, i) => (
                 <button
-                  key={tab.label}
-                  onClick={() => setActiveTab(tab.label as string)}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium border-b-[1.5px] -mb-px transition-colors duration-150 rounded-t-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30 ${
-                    activeTab === tab.label
-                      ? "border-[#0d2d6b] text-[#0d2d6b]"
-                      : "border-transparent text-gray-400 hover:text-gray-700"
+                  key={v}
+                  ref={el => { tabRefs.current[i] = el; }}
+                  onClick={() => switchView(v)}
+                  className={`flex items-center gap-1.5 px-4 py-[9px] text-[13.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30 ${
+                    view === v ? "font-semibold text-[#0d2d6b]" : "font-medium text-[#8e8e93] hover:text-gray-700"
                   }`}
                 >
-                  {tab.label}
+                  {v}
                   <span
-                    className={`text-[11px] px-[6px] py-px rounded-full font-semibold tabular-nums transition-colors duration-150 ${
-                      activeTab === tab.label
-                        ? "bg-[#0d2d6b] text-white"
-                        : "bg-gray-100 text-gray-500"
+                    className={`text-[10.5px] px-[6px] py-px rounded-full font-semibold tabular-nums transition-all duration-150 ${
+                      view === v ? "text-white" : "bg-gray-100/80 text-gray-400"
                     }`}
+                    style={view === v ? { backgroundColor: NAVY } : {}}
                   >
-                    {tab.count}
+                    {VIEW_KEYS[v].length}
                   </span>
                 </button>
               ))}
+              <span
+                aria-hidden
+                className="absolute bottom-0 rounded-full"
+                style={{
+                  left: tabIndicator.left,
+                  width: tabIndicator.width,
+                  height: 2,
+                  backgroundColor: NAVY,
+                  transform: "translateY(50%)",
+                  transition: "left 0.32s cubic-bezier(.16,1,.3,1), width 0.32s cubic-bezier(.16,1,.3,1)",
+                }}
+              />
             </div>
-            <div className="flex items-center gap-1 text-[12px] text-gray-400">
-              <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 active:scale-90 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30" disabled>
+            <div className="flex items-center gap-1 text-[12px]" style={{ color: "#8e8e93" }}>
+              <button className="p-1 rounded-lg disabled:opacity-30 hover:bg-black/[0.05] active:scale-90 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30" disabled>
                 <ChevronLeft size={14} />
               </button>
-              <span className="px-1">Page 1 of 3</span>
-              <button className="p-1 rounded hover:bg-gray-100 active:scale-90 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30">
+              <span className="px-1 tabular-nums">Page 1 of 3</span>
+              <button className="p-1 rounded-lg hover:bg-black/[0.05] active:scale-90 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30">
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -1122,18 +1479,28 @@ export default function App() {
             ref={gridRef}
             tabIndex={0}
             onKeyDown={onGridKeyDown}
-            className="flex-1 overflow-auto bg-white rounded-2xl border border-gray-200/70 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_1px_2px_rgba(0,0,0,0.04)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/20 transition-shadow"
+            className="flex-1 overflow-auto bg-white rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/20 transition-shadow"
+            style={{
+              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+            }}
           >
+            <div
+              key={view}
+              style={{ "--enter": `${dir * 28}px` } as React.CSSProperties}
+            >
             <table className="w-full text-[13px] border-collapse">
               <thead>
-                <tr className="chrome-blur bg-gray-50/80 sticky top-0 z-20 backdrop-blur-sm shadow-[0_1px_0_rgba(0,0,0,0.05),0_4px_6px_-4px_rgba(0,0,0,0.06)]">
-                  {columns.map(col => {
+                <tr className="chrome-blur sticky top-0 z-20 backdrop-blur-sm" style={{ backgroundColor: "rgba(249,249,251,0.92)", boxShadow: "0 1px 0 rgba(0,0,0,0.07)" }}>
+                  {cols.map((col, ci) => {
                     const selected = colFilters[col.key] ?? [];
                     const isFiltered = selected.length > 0;
+                    const sw = swapProps(ci);
                     return (
                       <th
                         key={col.key}
-                        className="text-left px-4 py-[11px] text-[10.5px] font-semibold text-gray-400 tracking-[0.07em] uppercase select-none whitespace-nowrap border-r border-gray-100/80 relative"
+                        className={`${sw.swapClass} text-left px-4 py-[10px] text-[10px] font-semibold tracking-[0.08em] uppercase select-none whitespace-nowrap border-r relative`}
+                        style={{ ...sw.swapStyle, color: "#8e8e93", borderColor: "rgba(0,0,0,0.06)" }}
                       >
                         <div className="flex items-center justify-between gap-1">
                           <button
@@ -1155,7 +1522,14 @@ export default function App() {
                         {openFilter === col.key && (
                           <>
                             <div className="fixed inset-0 z-30" onClick={() => setOpenFilter(null)} />
-                            <div className="pop-in surface-pop absolute right-0 top-full mt-1.5 z-40 w-56 bg-white border border-gray-200/80 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] py-1 normal-case tracking-normal font-normal">
+                            <div className="pop-in surface-pop absolute right-0 top-full mt-1.5 z-40 w-56 rounded-[14px] py-1 normal-case tracking-normal font-normal"
+                              style={{
+                                backgroundColor: "rgba(255,255,255,0.92)",
+                                backdropFilter: "blur(20px) saturate(180%)",
+                                border: "1px solid rgba(0,0,0,0.1)",
+                                boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)",
+                              }}
+                            >
                               <div className="flex items-center justify-between px-3.5 py-2 border-b border-gray-100">
                                 <span className="text-[11.5px] font-semibold text-gray-600">Filter by {col.label.toLowerCase()}</span>
                                 {isFiltered && (
@@ -1194,7 +1568,7 @@ export default function App() {
                       </th>
                     );
                   })}
-                  <th className="w-[72px] border-gray-100/80" />
+                  <th className="w-[64px]" style={{ borderColor: "rgba(0,0,0,0.06)" }} />
                 </tr>
               </thead>
               <tbody>
@@ -1203,11 +1577,12 @@ export default function App() {
                   return (
                   <tr
                     key={`${row.uid}-${ri}`}
-                    className={`group border-b border-gray-100/80 transition-colors duration-100 ${
-                      rowLocked ? "bg-gray-50/60" : ri % 2 === 1 ? "bg-gray-50/30" : ""
-                    } ${rowLocked ? "hover:bg-gray-50/80" : "hover:bg-[#0d2d6b]/[0.025]"}`}
+                    className={`group transition-colors duration-100 ${
+                      rowLocked ? "bg-[#fafafa]" : ri % 2 === 1 ? "bg-[#fafafa]/60" : "bg-white"
+                    } ${rowLocked ? "hover:bg-gray-100/50" : "hover:bg-[#eef2fa]"}`}
+                    style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}
                   >
-                    {columns.map((col, ci) => {
+                    {cols.map((col, ci) => {
                       const isSaving = savingSet.has(row.uid);
                       const isDirty = dirtySet.has(row.uid);
                       const indicator = ci === 0
@@ -1219,6 +1594,7 @@ export default function App() {
                           col={col}
                           value={row[col.key]}
                           locked={rowLocked}
+                          {...swapProps(ci)}
                           active={active?.r === ri && active?.c === ci}
                           editing={isEditing && active?.r === ri && active?.c === ci}
                           seed={seed}
@@ -1231,12 +1607,12 @@ export default function App() {
                         />
                       );
                     })}
-                    <td className="px-2.5 py-[11px] whitespace-nowrap">
-                      <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                    <td className="px-2 py-[10px] whitespace-nowrap">
+                      <div className="flex items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
                         <RowMenu
                           row={row}
                           locked={rowLocked}
-                          onEdit={r => { setActive({ r: ri, c: 0 }); startEdit(r[columns[0].key]); }}
+                          onEdit={r => { setActive({ r: ri, c: 0 }); startEdit(r[cols[0].key]); }}
                           onViewDetails={r => { setHistoryRow(null); setDetailRow(r); }}
                           onViewHistory={r => { setDetailRow(null); setHistoryRow(r); }}
                           onDuplicate={duplicateRow}
@@ -1249,12 +1625,13 @@ export default function App() {
                 })}
 
                 {/* Draft / add row */}
-                <tr className="border-b border-gray-100/80 bg-[#0d2d6b]/[0.018]">
-                  {columns.map((col, ci) => (
+                <tr className="bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                  {cols.map((col, ci) => (
                     <GridCell
                       key={col.key}
                       col={col}
                       value={draft[col.key]}
+                      {...swapProps(ci)}
                       placeholder={ci === 0 ? "+ Add new idea…" : ""}
                       active={active?.r === draftIndex && active?.c === ci}
                       editing={isEditing && active?.r === draftIndex && active?.c === ci}
@@ -1269,22 +1646,23 @@ export default function App() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Footer status bar */}
-          <div className="flex items-center justify-between text-[12px] text-gray-400 px-0.5 shrink-0">
+          <div className="flex items-center justify-between text-[12px] px-0.5 shrink-0" style={{ color: "#8e8e93" }}>
             <div className="flex items-center gap-4">
               <button
                 onClick={() => { setActive({ r: draftIndex, c: 0 }); startEdit(""); }}
-                className="flex items-center gap-1.5 font-medium transition-all duration-100 hover:opacity-70 active:scale-95 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30"
+                className="flex items-center gap-1.5 font-semibold transition-all duration-100 hover:opacity-70 active:scale-95 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30"
                 style={{ color: NAVY }}
               >
-                <Plus size={13} strokeWidth={2.5} />
+                <Plus size={12} strokeWidth={2.5} />
                 Add row
               </button>
               <span className="text-gray-400/80">
                 {sorted.length} {sorted.length === 1 ? "idea" : "ideas"}
-                {(search || activeFilterCount > 0) && ` — filtered from ${rows.length}`}
+                {(portfolio !== "All" || search || activeFilterCount > 0) && ` — filtered from ${rows.length}`}
                 {activeFilterCount > 0 && ` · ${activeFilterCount} ${activeFilterCount === 1 ? "filter" : "filters"} active`}
               </span>
             </div>
@@ -1297,7 +1675,7 @@ export default function App() {
       <IdeaDetailPanel
         row={detailRow}
         onClose={() => setDetailRow(null)}
-        onEdit={r => { setActive({ r: 0, c: 0 }); startEdit(r[columns[0].key]); }}
+        onEdit={r => { setActive({ r: 0, c: 0 }); startEdit(r[cols[0].key]); }}
       />
       <IdeaHistoryPanel
         row={historyRow}
