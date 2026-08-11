@@ -1,5 +1,5 @@
 import type { ViewKey } from "../../types";
-import { VIEW_KEYS, VIEWS } from "../../data/columns";
+import { VIEWS } from "../../data/columns";
 import { NAVY } from "../../lib/theme";
 
 export function ViewTabs({
@@ -27,14 +27,6 @@ export function ViewTabs({
             }`}
           >
             {v}
-            <span
-              className={`text-[10.5px] px-[6px] py-px rounded-full font-semibold tabular-nums transition-all duration-150 ${
-                pendingView === v ? "text-white" : "bg-gray-100/80 text-gray-400"
-              }`}
-              style={pendingView === v ? { backgroundColor: NAVY } : {}}
-            >
-              {VIEW_KEYS[v].length}
-            </span>
           </button>
         ))}
         <span

@@ -28,7 +28,7 @@ export const columns: Column[] = [
   { key: "endDate",              label: "End Date (CSR)",                           width: 100 },
   { key: "regionalFeedback",     label: "Regional Feedback",                        width: 250, tooltip: true },
   { key: "comments",             label: "Comments",                                 width: 250, tooltip: true },
-  { key: "portfolio",            label: "Portfolio",                                width: 150, options: [...PORTFOLIOS] },
+  { key: "portfolio",            label: "Portfolio",                                width: 100, options: [...PORTFOLIOS] },
 ];
 
 // The tab strip switches which slice of the schema is on screen — not which rows.

@@ -3,7 +3,7 @@ import { Lock } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 import type { Idea, MoveDir, SortDir, ViewKey } from "./types";
-import { VIEW_KEYS, viewColumns } from "./data/columns";
+import { VIEW_KEYS, viewColumns, columns as allColumns } from "./data/columns";
 import { emptyDraft, initialIdeas } from "./data/ideas";
 import { clamp } from "./lib/format";
 import { isLocked, LOCK_REASON } from "./lib/locking";
@@ -64,7 +64,11 @@ export default function App() {
 
   // Columns currently on screen. Everything index-based — the cursor, keyboard nav,
   // commits — is relative to this list, not the full schema.
-  const cols = viewColumns(view);
+  const portfolioCol = allColumns.find(c => c.key === "portfolio")!;
+  const baseCols = viewColumns(view);
+  const cols = portfolio === "All"
+    ? [baseCols[0], portfolioCol, ...baseCols.slice(1)]
+    : baseCols;
 
   function handleSort(key: string) {
     if (sortCol === key) {
