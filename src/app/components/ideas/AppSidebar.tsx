@@ -1,20 +1,45 @@
+import { useState } from "react";
 import { FileText, HelpCircle, Home } from "lucide-react";
-import { currentUser, NAVY_DARK } from "../../lib/theme";
+import { currentUser } from "../../lib/theme";
+import type { Theme } from "../../hooks/usePreferences";
+import { SettingsPopover } from "./SettingsPopover";
 
-const NAV_ITEMS = [
-  { icon: <Home size={19} strokeWidth={1.7} />, label: "Home", active: true },
-  { icon: <FileText size={19} strokeWidth={1.7} />, label: "Ideas", active: false },
-  { icon: <HelpCircle size={19} strokeWidth={1.7} />, label: "Help", active: false },
+export type Page = "home" | "ideas" | "help";
+
+export type SidebarPrefs = {
+  theme: Theme;
+  onSetTheme: (t: Theme) => void;
+  zoom: number;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onResetZoom: () => void;
+  canZoomIn: boolean;
+  canZoomOut: boolean;
+};
+
+const NAV_ITEMS: { icon: React.ReactNode; label: string; page: Page }[] = [
+  { icon: <Home size={19} strokeWidth={1.7} />, label: "Home", page: "home" },
+  { icon: <FileText size={19} strokeWidth={1.7} />, label: "Ideas", page: "ideas" },
+  { icon: <HelpCircle size={19} strokeWidth={1.7} />, label: "Help", page: "help" },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({
+  page,
+  onNavigate,
+  prefs,
+}: {
+  page: Page;
+  onNavigate: (p: Page) => void;
+  prefs: SidebarPrefs;
+}) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <aside
       className="flex flex-col items-center pt-5 pb-5 shrink-0"
       style={{
         width: 80,
-        background: `linear-gradient(180deg, #0f3272 0%, ${NAVY_DARK} 100%)`,
-        boxShadow: "1px 0 0 rgba(0,0,0,0.12)",
+        background: "linear-gradient(180deg, var(--sidebar-top) 0%, var(--sidebar-bottom) 100%)",
+        boxShadow: "1px 0 0 var(--sidebar-border)",
       }}
     >
       {/* Logo mark */}
@@ -22,7 +47,7 @@ export function AppSidebar() {
         className="flex items-center justify-center rounded-[14px] text-white font-bold select-none mb-7"
         style={{
           width: 44, height: 44,
-          background: "rgba(255,255,255,0.14)",
+          background: "var(--sidebar-logo-bg)",
           boxShadow: "0 1px 0 rgba(255,255,255,0.12) inset, 0 2px 8px rgba(0,0,0,0.18)",
           fontSize: 11.5,
           letterSpacing: "0.05em",
@@ -33,37 +58,60 @@ export function AppSidebar() {
 
       {/* Nav */}
       <nav className="flex flex-col items-center gap-0.5 w-full px-2">
-        {NAV_ITEMS.map(item => (
-          <button
-            key={item.label}
-            className={`flex flex-col items-center gap-1 w-full py-2.5 rounded-xl transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
-              item.active
-                ? "text-white bg-white/[0.15] shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
-                : "text-white/45 hover:text-white/80 hover:bg-white/[0.07]"
-            }`}
-          >
-            {item.icon}
-            <span className="text-[9.5px] font-medium tracking-[0.02em]">{item.label}</span>
-          </button>
-        ))}
+        {NAV_ITEMS.map(item => {
+          const active = item.page === page;
+          return (
+            <button
+              key={item.label}
+              onClick={() => onNavigate(item.page)}
+              aria-current={active ? "page" : undefined}
+              className={`side-nav-item flex flex-col items-center gap-1 w-full py-2.5 rounded-xl active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${active ? "is-active" : ""}`}
+            >
+              {item.icon}
+              <span className="text-[9.5px] font-medium tracking-[0.02em]">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
 
-      {/* User identity */}
+      {/* User identity — the profile picture is the entry point to settings
+          (appearance + zoom). The popover anchors here (relative wrapper). */}
       <div className="flex-1" />
-      <div className="flex flex-col items-center gap-1">
-        <div
-          className="flex items-center justify-center rounded-full text-white font-semibold select-none"
+      <div className="relative flex flex-col items-center gap-1">
+        <button
+          onClick={() => setSettingsOpen(o => !o)}
+          aria-haspopup="dialog"
+          aria-expanded={settingsOpen}
+          aria-label="Settings"
+          title="Settings"
+          className="flex items-center justify-center rounded-full text-white font-semibold select-none transition-all duration-150 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 hover:brightness-110"
           style={{
             width: 34, height: 34,
-            background: "rgba(255,255,255,0.18)",
+            background: "var(--sidebar-avatar-bg)",
             fontSize: 13,
             letterSpacing: "-0.01em",
-            boxShadow: "0 0 0 2px rgba(255,255,255,0.1)",
+            boxShadow: settingsOpen
+              ? "0 0 0 2px var(--sidebar-fg-active)"
+              : "0 0 0 2px var(--sidebar-avatar-ring)",
           }}
         >
           {currentUser.name.charAt(0)}
-        </div>
-        <span className="text-[9.5px] font-medium text-white/65 mt-0.5 tracking-[0.01em]">{currentUser.name}</span>
+        </button>
+        <span className="text-[9.5px] font-medium mt-0.5 tracking-[0.01em]" style={{ color: "var(--sidebar-fg-hover)" }}>{currentUser.name}</span>
+
+        {settingsOpen && (
+          <SettingsPopover
+            theme={prefs.theme}
+            onSetTheme={prefs.onSetTheme}
+            zoom={prefs.zoom}
+            onZoomIn={prefs.onZoomIn}
+            onZoomOut={prefs.onZoomOut}
+            onResetZoom={prefs.onResetZoom}
+            canZoomIn={prefs.canZoomIn}
+            canZoomOut={prefs.canZoomOut}
+            onClose={() => setSettingsOpen(false)}
+          />
+        )}
       </div>
     </aside>
   );

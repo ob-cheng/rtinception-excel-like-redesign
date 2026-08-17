@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Lock, PenLine, Sparkles, X } from "lucide-react";
 import type { Idea } from "../../types";
-import { NAVY } from "../../lib/theme";
 import { isLocked, LOCK_REASON } from "../../lib/locking";
 
 export function IdeaDetailPanel({
@@ -102,7 +101,7 @@ export function IdeaDetailPanel({
         role="dialog"
         aria-modal="true"
         aria-label={`Idea details — ${row.uid}`}
-        className="absolute right-0 top-0 h-full w-[460px] max-w-full bg-white flex flex-col outline-none"
+        className="absolute right-0 top-0 h-full w-[460px] max-w-full bg-white dark:bg-[#1f1f21] flex flex-col outline-none"
         style={{
           boxShadow: "-1px 0 0 rgba(0,0,0,0.04), -24px 0 60px -20px rgba(15,23,42,0.28)",
           transform: visible ? "translateX(0)" : "translateX(100%)",
@@ -114,25 +113,25 @@ export function IdeaDetailPanel({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 mb-3">
-                <span className="font-mono text-[11px] tracking-[0.02em] text-gray-400">{row.uid}</span>
+                <span className="font-mono text-[11px] tracking-[0.02em] text-gray-400 dark:text-gray-400">{row.uid}</span>
                 {locked && (
                   <>
-                    <span className="text-gray-200">·</span>
-                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                    <span className="text-gray-200 dark:text-gray-600">·</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-400">
                       <Lock size={11} strokeWidth={2} /> Locked
                     </span>
                   </>
                 )}
               </div>
-              <h2 className="text-[26px] leading-[1.15] tracking-[-0.02em] text-gray-900 truncate">
+              <h2 className="text-[26px] leading-[1.15] tracking-[-0.02em] text-gray-900 dark:text-gray-100 truncate">
                 {row.project || "Untitled idea"}
               </h2>
-              <p className="text-[13px] text-gray-400 mt-1.5">{row.franchise} · {row.area}</p>
+              <p className="text-[13px] text-gray-400 dark:text-gray-400 mt-1.5">{row.franchise} · {row.area}</p>
             </div>
             <button
               onClick={onClose}
               aria-label="Close"
-              className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 bg-gray-50 hover:bg-gray-100 hover:text-gray-700 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+              className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
             >
               <X size={15} strokeWidth={2.25} />
             </button>
@@ -143,28 +142,28 @@ export function IdeaDetailPanel({
         <div className="flex-1 overflow-y-auto px-7 pb-8">
 
           {/* Hero — the aspirational claim leads, set large and confident. */}
-          <div className="rounded-2xl px-5 py-5" style={{ backgroundColor: `${NAVY}07` }}>
+          <div className="rounded-2xl px-5 py-5" style={{ backgroundColor: "var(--fill-subtle)" }}>
             <div className="flex items-center gap-1.5 mb-2.5">
-              <Sparkles size={13} strokeWidth={2} style={{ color: NAVY }} />
-              <p className="text-[11px] font-medium tracking-[0.01em]" style={{ color: NAVY }}>Potential claims</p>
+              <Sparkles size={13} strokeWidth={2} style={{ color: "var(--accent)" }} />
+              <p className="text-[11px] font-medium tracking-[0.01em]" style={{ color: "var(--accent)" }}>Potential claims</p>
             </div>
-            <p className="text-[19px] leading-[1.45] tracking-[-0.01em] text-gray-900">
-              {row.potentialClaims || <span className="text-gray-300">No claims defined yet.</span>}
+            <p className="text-[19px] leading-[1.45] tracking-[-0.01em] text-gray-900 dark:text-gray-100">
+              {row.potentialClaims || <span className="text-gray-300 dark:text-gray-500">No claims defined yet.</span>}
             </p>
           </div>
 
           {/* Specification — quiet label/value rows on hairlines. */}
           <div className="mt-7">
-            <p className="text-[12px] font-medium text-gray-400 mb-1">Specification</p>
+            <p className="text-[12px] font-medium text-gray-400 dark:text-gray-400 mb-1">Specification</p>
             <dl>
               {spec.map((f, i) => (
                 <div
                   key={f.label}
-                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100 dark:border-white/10" : ""}`}
                 >
-                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
-                  <dd className="text-[13px] text-gray-900 text-right">
-                    {f.value || <span className="text-gray-300">—</span>}
+                  <dt className="text-[13px] text-gray-500 dark:text-gray-400 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 dark:text-gray-100 text-right">
+                    {f.value || <span className="text-gray-300 dark:text-gray-500">—</span>}
                   </dd>
                 </div>
               ))}
@@ -173,16 +172,16 @@ export function IdeaDetailPanel({
 
           {/* Study design & endpoints */}
           <div className="mt-7">
-            <p className="text-[12px] font-medium text-gray-400 mb-1">Study Design &amp; Endpoints</p>
+            <p className="text-[12px] font-medium text-gray-400 dark:text-gray-400 mb-1">Study Design &amp; Endpoints</p>
             <dl>
               {endpoints.map((f, i) => (
                 <div
                   key={f.label}
-                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100 dark:border-white/10" : ""}`}
                 >
-                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
-                  <dd className="text-[13px] text-gray-900 text-right">
-                    {f.value || <span className="text-gray-300">—</span>}
+                  <dt className="text-[13px] text-gray-500 dark:text-gray-400 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 dark:text-gray-100 text-right">
+                    {f.value || <span className="text-gray-300 dark:text-gray-500">—</span>}
                   </dd>
                 </div>
               ))}
@@ -191,16 +190,16 @@ export function IdeaDetailPanel({
 
           {/* Financials */}
           <div className="mt-7">
-            <p className="text-[12px] font-medium text-gray-400 mb-1">Financials</p>
+            <p className="text-[12px] font-medium text-gray-400 dark:text-gray-400 mb-1">Financials</p>
             <dl>
               {financials.map((f, i) => (
                 <div
                   key={f.label}
-                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100 dark:border-white/10" : ""}`}
                 >
-                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
-                  <dd className="text-[13px] text-gray-900 text-right font-mono tabular-nums">
-                    {f.value || <span className="text-gray-300 font-sans">—</span>}
+                  <dt className="text-[13px] text-gray-500 dark:text-gray-400 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 dark:text-gray-100 text-right font-mono tabular-nums">
+                    {f.value || <span className="text-gray-300 dark:text-gray-500 font-sans">—</span>}
                   </dd>
                 </div>
               ))}
@@ -210,22 +209,22 @@ export function IdeaDetailPanel({
           {/* Comments */}
           {row.comments && (
             <div className="mt-7">
-              <p className="text-[12px] font-medium text-gray-400 mb-1">Comments</p>
-              <p className="text-[13px] text-gray-700 leading-relaxed">{row.comments}</p>
+              <p className="text-[12px] font-medium text-gray-400 dark:text-gray-400 mb-1">Comments</p>
+              <p className="text-[13px] text-gray-700 dark:text-gray-200 leading-relaxed">{row.comments}</p>
             </div>
           )}
 
           {/* Governance */}
           <div className="mt-7">
-            <p className="text-[12px] font-medium text-gray-400 mb-1">Governance</p>
+            <p className="text-[12px] font-medium text-gray-400 dark:text-gray-400 mb-1">Governance</p>
             <dl>
               {governance.map((f, i) => (
                 <div
                   key={f.label}
-                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                  className={`flex items-baseline justify-between gap-6 py-3 ${i > 0 ? "border-t border-gray-100 dark:border-white/10" : ""}`}
                 >
-                  <dt className="text-[13px] text-gray-500 shrink-0">{f.label}</dt>
-                  <dd className="text-[13px] text-gray-900 text-right">{f.value}</dd>
+                  <dt className="text-[13px] text-gray-500 dark:text-gray-400 shrink-0">{f.label}</dt>
+                  <dd className="text-[13px] text-gray-900 dark:text-gray-100 text-right">{f.value}</dd>
                 </div>
               ))}
             </dl>
@@ -233,17 +232,17 @@ export function IdeaDetailPanel({
         </div>
 
         {/* Footer — one clear action, or a calm lock explanation. */}
-        <div className="shrink-0 px-7 py-4 border-t border-gray-100 bg-white/80 backdrop-blur">
+        <div className="shrink-0 px-7 py-4 border-t border-gray-100 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur">
           {locked ? (
-            <div className="flex items-start gap-2.5 px-4 py-3 bg-gray-50 rounded-2xl text-[13px] text-gray-500 leading-relaxed">
-              <Lock size={14} strokeWidth={2} className="text-gray-400 mt-px shrink-0" />
+            <div className="flex items-start gap-2.5 px-4 py-3 bg-gray-50 dark:bg-white/5 rounded-2xl text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
+              <Lock size={14} strokeWidth={2} className="text-gray-400 dark:text-gray-400 mt-px shrink-0" />
               {LOCK_REASON}
             </div>
           ) : (
             <button
               onClick={() => { onEdit(row); onClose(); }}
-              className="flex items-center justify-center gap-2 w-full h-11 rounded-full text-white text-[14px] font-medium active:scale-[0.99] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0d2d6b]/50"
-              style={{ backgroundColor: NAVY }}
+              className="flex items-center justify-center gap-2 w-full h-11 rounded-full text-[14px] font-medium active:scale-[0.99] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent-ring)]"
+              style={{ backgroundColor: "var(--accent-strong)", color: "var(--on-accent)" }}
             >
               <PenLine size={15} strokeWidth={2} />
               Edit idea

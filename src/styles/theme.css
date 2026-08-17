@@ -1,6 +1,53 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
+
+  /* ── App semantic palette ────────────────────────────────────────────────
+     The Ideas app draws its surfaces from these tokens (not raw hex) so the
+     light/dark toggle is a single source of truth. Dark values live in `.dark`.
+     Named by role, not by color, so components read intent. */
+  --app-bg: #f5f5f7;          /* window background behind everything */
+  --surface: #ffffff;         /* cards, table body, inputs-on-white */
+  --surface-2: #fafafa;       /* subtly raised / zebra even rows */
+  --surface-raised: rgba(255,255,255,0.92); /* popovers, floating menus */
+  --zebra: #fcfcfc;           /* odd data rows */
+  --row-hover: #eef2fa;       /* row hover wash */
+  --cell-active: rgba(13,45,107,0.03); /* selected-cell tint */
+  --hairline: rgba(0,0,0,0.08);        /* structural borders */
+  --hairline-soft: rgba(0,0,0,0.05);   /* row / cell separators */
+  --fill-subtle: rgba(0,0,0,0.05);     /* search field, ghost chips */
+  --readonly-fill: rgba(60,60,67,0.045); /* read-only column band */
+  --header-surface: rgba(249,249,251,0.92); /* translucent grid header */
+  --header-solid: #f6f6f8; /* opaque twin of the header tint — for sticky frozen headers */
+  --text-1: #1c1c1e;          /* primary text */
+  --text-2: #3c3c43;          /* body / cell text */
+  --text-3: #8e8e93;          /* secondary / labels */
+  --text-4: #aeaeb2;          /* tertiary / placeholders */
+  --accent: #0d2d6b;          /* brand navy — accent text, icons, borders, tints */
+  --accent-2: #0f3272;        /* navy gradient stop */
+  --accent-strong: #0d2d6b;   /* solid primary fills (white text sits on this) */
+  --accent-ring: rgba(13,45,107,0.30); /* focus ring */
+  --on-accent: #ffffff;       /* text on accent fills */
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+
+  /* Sidebar — a brand-navy rail in light. In dark it becomes a neutral gray
+     panel (see .dark) so a saturated block of navy never sits against near-black. */
+  --sidebar-top: #0f3272;
+  --sidebar-bottom: #0a2458;
+  --sidebar-border: rgba(0,0,0,0.12);
+  --sidebar-fg: rgba(255,255,255,0.48);        /* inactive nav */
+  --sidebar-fg-hover: rgba(255,255,255,0.82);
+  --sidebar-fg-active: #ffffff;                /* selected nav */
+  --sidebar-active-bg: rgba(255,255,255,0.15);
+  --sidebar-hover-bg: rgba(255,255,255,0.07);
+  --sidebar-logo-bg: rgba(255,255,255,0.14);
+  --sidebar-avatar-bg: rgba(255,255,255,0.18);
+  --sidebar-avatar-ring: rgba(255,255,255,0.10);
+  /* Circular profile avatar — a small, deliberate pop of brand color. */
+  --avatar-top: #0f3272;
+  --avatar-bottom: #0a2458;
+
   --font-size: 15px;
   --background: #f4f6f9;
   --foreground: #1a1a2e;
@@ -14,7 +61,9 @@
   --secondary-foreground: #030213;
   --muted: #ececf0;
   --muted-foreground: #717182;
-  --accent: #e9ebef;
+  /* NOTE: --accent is owned by the app palette above (brand navy). The shadcn
+     --accent token was removed here to stop it overriding the brand accent by
+     cascade order. --accent-foreground stays for any legacy ui/* consumer. */
   --accent-foreground: #030213;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
@@ -37,11 +86,64 @@
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  /* --sidebar-border owned by the app palette above; shadcn duplicate removed. */
   --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
+  color-scheme: dark;
+
+  /* ── App semantic palette (dark) ────────────────────────────────────────────
+     Apple's dark approach, applied deliberately:
+     • Surfaces are NEUTRAL near-black grays, not a colored chrome. Depth is read
+       from a tone ladder (each higher layer a touch lighter), not from borders or
+       from a big block of brand color. A saturated navy sitting on black reads as
+       muddy, so navy is demoted to an *accent* here — never a large fill.
+     • The brand blue is lifted to a legible, confident blue for small accents
+       (selected states, links, icons); a slightly deeper blue backs solid primary
+       buttons so white text stays readable.
+     • Text uses a white-emphasis ladder (Apple label opacities) for calm hierarchy. */
+  --app-bg: #161618;        /* window — deepest layer */
+  --surface: #1e1e20;       /* table body, cards, odd rows */
+  --surface-2: #2a2a2d;     /* raised: portfolio panel, popover base, locked rows */
+  --surface-raised: rgba(44,44,47,0.72); /* floating glass menus */
+  --zebra: #242426;         /* even data rows — one step up from the surface */
+  --row-hover: #2f2f33;     /* neutral hover lift */
+  --cell-active: rgba(91,157,248,0.16);  /* selected-cell tint — accent blue */
+  --hairline: rgba(255,255,255,0.12);    /* structural borders */
+  --hairline-soft: rgba(255,255,255,0.07); /* row / cell separators */
+  --fill-subtle: rgba(255,255,255,0.06); /* search field, ghost chips */
+  --readonly-fill: rgba(255,255,255,0.032); /* read-only band */
+  --header-surface: rgba(30,30,32,0.80); /* translucent grid header */
+  --header-solid: #1e1e20; /* opaque twin of the header tint — for sticky frozen headers */
+  --text-1: #f5f5f7;        /* primary */
+  --text-2: #c7c7cd;        /* body / cell */
+  --text-3: #98989f;        /* secondary / labels */
+  --text-4: #6a6a71;        /* tertiary / placeholders */
+  --accent: #5b9df8;        /* lifted brand blue — accent text, icons, borders */
+  --accent-2: #4f8cf5;      /* accent gradient stop */
+  --accent-strong: #2f6fe0; /* solid primary fills — white text passes on this */
+  --accent-ring: rgba(91,157,248,0.45); /* focus ring, brighter to read on dark */
+  --on-accent: #ffffff;
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
+
+  /* Sidebar (dark) — a neutral gray rail, one step above the window, separated by a
+     hairline. Brand color appears only on the selected item (accent tint + accent
+     text) and the avatar, never as a full navy fill. */
+  --sidebar-top: #2a2a2d;
+  --sidebar-bottom: #1b1b1d;
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-fg: rgba(235,235,245,0.50);
+  --sidebar-fg-hover: rgba(235,235,245,0.85);
+  --sidebar-fg-active: #6fa8ff;
+  --sidebar-active-bg: rgba(91,157,248,0.16);
+  --sidebar-hover-bg: rgba(255,255,255,0.06);
+  --sidebar-logo-bg: rgba(255,255,255,0.08);
+  --sidebar-avatar-bg: rgba(255,255,255,0.12);
+  --sidebar-avatar-ring: rgba(255,255,255,0.12);
+  --avatar-top: #4f8cf5;
+  --avatar-bottom: #2f6fe0;
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -54,7 +156,7 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  /* --accent owned by the app palette above (lifted brand blue); shadcn duplicate removed. */
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
@@ -74,7 +176,7 @@
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
+  /* --sidebar-border owned by the app palette above; shadcn duplicate removed. */
   --sidebar-ring: oklch(0.439 0 0);
 }
 

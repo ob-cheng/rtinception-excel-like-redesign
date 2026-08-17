@@ -1,6 +1,5 @@
 import type { ViewKey } from "../../types";
 import { VIEWS } from "../../data/columns";
-import { NAVY } from "../../lib/theme";
 
 export function ViewTabs({
   pendingView,
@@ -16,14 +15,14 @@ export function ViewTabs({
 }) {
   return (
     <div className="shrink-0">
-      <div className="relative inline-flex items-center gap-0" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+      <div className="relative inline-flex items-center gap-0" style={{ borderBottom: "1px solid var(--hairline)" }}>
         {VIEWS.map((v, i) => (
           <button
             key={v}
             ref={el => { tabRefs.current[i] = el; }}
             onClick={() => onSelect(v)}
-            className={`flex items-center gap-1.5 px-4 py-[9px] text-[13.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d2d6b]/30 ${
-              pendingView === v ? "font-semibold text-[#0d2d6b]" : "font-medium text-[#8e8e93] hover:text-gray-700"
+            className={`flex items-center gap-1.5 px-4 py-[9px] text-[13.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
+              pendingView === v ? "font-semibold text-[color:var(--text-1)]" : "font-medium text-[color:var(--text-3)] hover:text-[color:var(--text-2)]"
             }`}
           >
             {v}
@@ -36,7 +35,7 @@ export function ViewTabs({
             left: indicator.left,
             width: indicator.width,
             height: 2,
-            backgroundColor: NAVY,
+            backgroundColor: "var(--accent-strong)",
             transform: "translateY(50%)",
             transition: "left 0.32s cubic-bezier(.16,1,.3,1), width 0.32s cubic-bezier(.16,1,.3,1)",
           }}

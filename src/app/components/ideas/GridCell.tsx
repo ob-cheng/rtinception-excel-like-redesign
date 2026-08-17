@@ -26,16 +26,16 @@ function TooltipCard({ text, anchor }: { text: string; anchor: DOMRect }) {
         left,
         width: cardW,
         zIndex: 9999,
-        backgroundColor: "rgba(255,255,255,0.88)",
+        backgroundColor: "var(--surface-raised)",
         backdropFilter: "blur(28px) saturate(180%)",
         WebkitBackdropFilter: "blur(28px) saturate(180%)",
-        border: "1px solid rgba(0,0,0,0.08)",
+        border: "1px solid var(--hairline)",
         borderRadius: 14,
         boxShadow: "0 8px 32px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07)",
         padding: "10px 13px",
         fontSize: 12.5,
         lineHeight: 1.5,
-        color: "#1c1c1e",
+        color: "var(--text-1)",
         pointerEvents: "none",
         animation: "tooltip-in 120ms cubic-bezier(0.34,1.56,0.64,1) both",
       }}
@@ -65,11 +65,15 @@ export function GridCell({
   locked,
   swapClass = "",
   swapStyle,
+  frozenLeft,
+  frozenLast,
+  readOnly,
   onSelect,
   onStartEdit,
   onCommit,
   onCancel,
   onLocked,
+  onReadOnly,
 }: {
   col: Column;
   value: string;
@@ -81,13 +85,22 @@ export function GridCell({
   locked?: boolean;
   swapClass?: string;
   swapStyle?: React.CSSProperties;
+  frozenLeft?: number;
+  frozenLast?: boolean;
+  readOnly?: boolean;
   onSelect: () => void;
   onStartEdit: () => void;
   onCommit: (v: string, move: MoveDir) => void;
   onCancel: () => void;
   onLocked?: () => void;
+  onReadOnly?: () => void;
 }) {
   const isFirst = col.key === "uid";
+  // Frozen (sticky) column plumbing — shared across the edit + display cells so a frozen column
+  // stays pinned even while a cell in it is being edited.
+  const frozen = frozenLeft != null;
+  const frozenStyle: React.CSSProperties = frozen ? { position: "sticky", left: frozenLeft, zIndex: 5 } : {};
+  const frozenClass = frozen ? (frozenLast ? " frozen frozen-last" : " frozen") : "";
   const contentRef = useRef<HTMLSpanElement>(null);
   const [tooltipAnchor, setTooltipAnchor] = useState<DOMRect | null>(null);
 
@@ -102,10 +115,11 @@ export function GridCell({
 
   const handleMouseLeave = useCallback(() => setTooltipAnchor(null), []);
 
-  if (editing) {
+  // Read-only columns (Franchise-owned context shown in Evidence) never enter edit mode.
+  if (editing && !readOnly) {
     if (col.options) {
       return (
-        <td className="p-0" style={{ borderRight: "1px solid rgba(0,0,0,0.05)" }}>
+        <td className={`p-0${frozenClass}`} style={{ borderRight: "1px solid var(--hairline-soft)", borderBottom: "1px solid var(--hairline-soft)", ...frozenStyle }}>
           <select
             autoFocus
             defaultValue={value}
@@ -114,7 +128,7 @@ export function GridCell({
             onKeyDown={e => {
               if (e.key === "Escape") { e.preventDefault(); onCancel(); }
             }}
-            className="w-full px-3 py-[9px] text-[13px] bg-white outline-none"
+            className="w-full px-3 py-[9px] text-[13px] bg-white dark:bg-[#1f1f21] outline-none"
             style={{ boxShadow: "0 0 0 2px rgba(13,45,107,0.55) inset" }}
           >
             <option value="">—</option>
@@ -126,7 +140,7 @@ export function GridCell({
       );
     }
     return (
-      <td className="p-0" style={{ borderRight: "1px solid rgba(0,0,0,0.05)" }}>
+      <td className={`p-0${frozenClass}`} style={{ borderRight: "1px solid var(--hairline-soft)", borderBottom: "1px solid var(--hairline-soft)", ...frozenStyle }}>
         <input
           autoFocus
           key={seed}
@@ -139,51 +153,70 @@ export function GridCell({
             else if (e.key === "Tab") { e.preventDefault(); onCommit(el.value, "right"); }
             else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
           }}
-          className="w-full px-3 py-[9px] text-[13px] bg-white outline-none"
-          style={{ boxShadow: "0 0 0 2px rgba(13,45,107,0.55) inset" }}
+          className="w-full px-3 py-[9px] text-[13px] outline-none"
+          style={{ backgroundColor: "var(--surface)", color: "var(--text-1)", boxShadow: "0 0 0 2px var(--accent) inset" }}
         />
       </td>
     );
   }
 
-  const textColor = locked ? "#aeaeb2" : isFirst ? "#1c1c1e" : "#3c3c43";
+  // Read-only cells read as a distinct, muted material: legible but clearly secondary, so the
+  // Franchise-owned band is obvious at a glance without shouting.
+  const textColor = locked ? "var(--text-4)" : readOnly ? "var(--text-3)" : isFirst ? "var(--text-1)" : "var(--text-2)";
 
   return (
     <>
       <td
         onClick={onSelect}
-        onDoubleClick={locked ? onLocked : onStartEdit}
+        onDoubleClick={locked ? onLocked : readOnly ? onReadOnly : onStartEdit}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        title={locked ? LOCK_REASON : undefined}
+        title={locked ? LOCK_REASON : readOnly ? "Managed by Franchise — edit from the Franchise tab" : undefined}
+        data-active={active ? "true" : undefined}
         style={{
           ...swapStyle,
+          ...frozenStyle,
           height: CELL_H,
-          borderRight: "1px solid rgba(0,0,0,0.05)",
+          borderRight: "1px solid var(--hairline-soft)",
+          // Row separators live on the cells (not <tr>) because separated borders ignore tr borders.
+          borderBottom: "1px solid var(--hairline-soft)",
           boxShadow: active
             ? locked
               ? "0 0 0 2px rgba(156,163,175,0.5) inset"
               : "0 0 0 2px rgba(13,45,107,0.55) inset"
             : undefined,
-          backgroundColor: active
-            ? locked ? "rgba(156,163,175,0.06)" : "rgba(13,45,107,0.03)"
-            : undefined,
+          // Frozen cells take their opaque background from the CSS variables on <tr> (so the
+          // other columns slide underneath); non-frozen cells keep the inline active tint.
+          backgroundColor: frozen
+            ? undefined
+            : active
+              ? locked ? "rgba(156,163,175,0.06)" : "var(--cell-active)"
+              : readOnly ? "var(--readonly-fill)" : undefined,
+          // A frozen read-only column can't use the inline fill above (its opaque base comes from
+          // CSS so the scrolling columns don't bleed through). Layer the same translucent read-only
+          // tint as a gradient image *over* that base, so a frozen read-only band looks identical to
+          // a non-frozen one — and rides the row's hover/zebra automatically, since only the base
+          // colour underneath changes.
+          backgroundImage:
+            frozen && readOnly && !active
+              ? "linear-gradient(var(--readonly-fill), var(--readonly-fill))"
+              : undefined,
         }}
         className={`${swapClass} px-3 py-[9px] select-none text-[13px] transition-colors duration-100 ${
-          locked ? "cursor-not-allowed" : "cursor-cell"
-        } ${isFirst && !locked ? "font-medium" : ""}`}
+          locked || readOnly ? "cursor-not-allowed" : "cursor-cell"
+        } ${isFirst && !locked ? "font-medium" : ""}${frozenClass}`}
       >
         <span
           ref={col.tooltip ? contentRef : undefined}
           style={{ ...clampStyle, color: textColor }}
         >
           {isFirst && locked && (
-            <Lock size={11} className="shrink-0 inline mr-1" style={{ color: "#aeaeb2" }} strokeWidth={2} />
+            <Lock size={11} className="shrink-0 inline mr-1" style={{ color: "var(--text-4)" }} strokeWidth={2} />
           )}
           {value !== "" ? value : (
-            <span style={{ color: "#c7c7cc" }}>{placeholder}</span>
+            <span style={{ color: "var(--text-4)" }}>{placeholder}</span>
           )}
-          {!locked && col.options && active && <Caret size={10} strokeWidth={2} style={{ color: "#aeaeb2", display: "inline", marginLeft: 2 }} />}
+          {!locked && !readOnly && col.options && active && <Caret size={10} strokeWidth={2} style={{ color: "var(--text-4)", display: "inline", marginLeft: 2 }} />}
           {indicator === "saving" && (
             <Loader2 size={10} className="animate-spin inline ml-1" style={{ color: "#f59e0b" }} />
           )}

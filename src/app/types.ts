@@ -33,11 +33,29 @@ export type Idea = {
   regionalFeedback: string;
   comments: string;
   portfolio: string;
+  // Lifecycle status. A record whose status is "Funded" leaves the Franchise / Evidence
+  // Function tabs and collects under the Funded tab instead. Optional so existing seed rows
+  // fall back to a default; edited/created records always carry an explicit value.
+  status?: string;
 };
+
+// The status value that moves a record into the Funded tab.
+export const FUNDED_STATUS = "Funded";
+export const STATUS_OPTIONS = ["Proposed", "Under Review", "Approved", "Funded", "Declined"];
 
 export type Column = { key: keyof Idea; label: string; width?: number; options?: string[]; tooltip?: boolean };
 
-export type ViewKey = "Franchise" | "Evidence Function";
+export type ViewKey = "Franchise" | "Evidence Function" | "Funded";
+
+// Ranking flow. A Brand Director orders one product's records (writes `brandRanking`);
+// a Portfolio Director orders a whole portfolio's records (writes `areaPrioritization`).
+export type RankPersona = "brand" | "portfolio";
+
+export type RankingConfig = {
+  persona: RankPersona;
+  // The scope value: a `project` (product) name for brand, a `portfolio` name for portfolio.
+  scope: string;
+};
 
 export type SortDir = "asc" | "desc" | null;
 
