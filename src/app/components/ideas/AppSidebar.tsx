@@ -37,14 +37,14 @@ export function AppSidebar({
     <aside
       className="flex flex-col items-center pt-5 pb-5 shrink-0"
       style={{
-        width: 80,
+        width: 84,
         background: "linear-gradient(180deg, var(--sidebar-top) 0%, var(--sidebar-bottom) 100%)",
         boxShadow: "1px 0 0 var(--sidebar-border)",
       }}
     >
       {/* Logo mark */}
       <div
-        className="flex items-center justify-center rounded-[14px] text-white font-bold select-none mb-7"
+        className="flex items-center justify-center rounded-[16px] text-white font-bold select-none mb-7"
         style={{
           width: 44, height: 44,
           background: "var(--sidebar-logo-bg)",
@@ -57,7 +57,7 @@ export function AppSidebar({
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-col items-center gap-0.5 w-full px-2">
+      <nav className="flex flex-col items-center gap-1 w-full px-2.5">
         {NAV_ITEMS.map(item => {
           const active = item.page === page;
           return (
@@ -65,7 +65,7 @@ export function AppSidebar({
               key={item.label}
               onClick={() => onNavigate(item.page)}
               aria-current={active ? "page" : undefined}
-              className={`side-nav-item flex flex-col items-center gap-1 w-full py-2.5 rounded-xl active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${active ? "is-active" : ""}`}
+              className={`side-nav-item flex flex-col items-center gap-1.5 w-full py-3 rounded-[14px] active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${active ? "is-active" : ""}`}
             >
               {item.icon}
               <span className="text-[9.5px] font-medium tracking-[0.02em]">{item.label}</span>

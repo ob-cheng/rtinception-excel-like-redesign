@@ -20,7 +20,7 @@ export function ZoomControl({
 }) {
   return (
     <div
-      className="flex items-center h-[34px] rounded-[10px] overflow-hidden"
+      className="flex items-center h-[34px] rounded-full overflow-hidden"
       style={{
         backgroundColor: "var(--surface)",
         border: "1px solid var(--hairline)",

@@ -4,41 +4,51 @@ import type { Idea } from "../../types";
 import { generateHistory } from "../../data/history";
 
 export function IdeaHistoryPanel({
-  row,
+  row: rowProp,
   onClose,
 }: {
   row: Idea | null;
   onClose: () => void;
 }) {
   const [visible, setVisible] = useState(false);
+  // Keep the last row mounted through the slide-OUT so the panel exits along its entry path (§7),
+  // matching the detail panel. `shownRow` outlives `rowProp=null` until the 0.4s transform finishes.
+  // The effects key off `rowProp` (real prop), never the displayed row, so the Escape listener is
+  // torn down on close instead of leaking.
+  const [shownRow, setShownRow] = useState<Idea | null>(rowProp);
 
   useEffect(() => {
-    if (row) {
-      requestAnimationFrame(() => setVisible(true));
-    } else {
-      setVisible(false);
+    if (rowProp) {
+      setShownRow(rowProp);
+      const id = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(id);
     }
-  }, [row]);
+    setVisible(false);
+    const t = setTimeout(() => setShownRow(null), 400);
+    return () => clearTimeout(t);
+  }, [rowProp]);
 
   useEffect(() => {
-    if (!row) return;
+    if (!rowProp) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [row, onClose]);
+  }, [rowProp, onClose]);
 
-  if (!row) return null;
+  if (!shownRow) return null;
+  const row = shownRow;
 
   const events = generateHistory(row);
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Scrim */}
+      {/* Scrim — matches the detail panel: a light dim (no blur) so the grid stays legible behind
+          this right-side inspector while still catching a click-away to dismiss (§ Depth). */}
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity duration-300"
+        className="absolute inset-0 bg-black/10 transition-opacity duration-300"
         style={{ opacity: visible ? 1 : 0 }}
       />
 
@@ -47,15 +57,16 @@ export function IdeaHistoryPanel({
         role="dialog"
         aria-modal="true"
         aria-label={`Activity for ${row.uid}`}
-        className="absolute right-0 top-0 h-full w-[460px] max-w-full bg-white dark:bg-[#1f1f21] flex flex-col outline-none"
+        className="absolute right-0 top-0 h-full w-[460px] max-w-full flex flex-col outline-none"
         style={{
-          boxShadow: "-1px 0 0 rgba(0,0,0,0.04), -24px 0 60px -20px rgba(15,23,42,0.28)",
+          backgroundColor: "var(--surface-modal)",
+          boxShadow: "-1px 0 0 var(--depth-edge), -24px 0 60px -20px rgba(15,23,42,0.28)",
           transform: visible ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
         {/* Header */}
-        <div className="shrink-0 px-7 pt-6 pb-4 flex items-start justify-between gap-4">
+        <div className="shrink-0 px-7 pt-6 pb-5 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="text-[20px] leading-tight tracking-[-0.02em] text-gray-900 dark:text-gray-100">Activity</h2>
             <p className="text-[13px] text-gray-400 dark:text-gray-400 mt-1 truncate">
@@ -67,7 +78,7 @@ export function IdeaHistoryPanel({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+            className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
           >
             <X size={15} strokeWidth={2.25} />
           </button>
@@ -92,7 +103,7 @@ export function IdeaHistoryPanel({
                     <div className="relative shrink-0 flex justify-center" style={{ width: 12 }}>
                       {!last && <span className="absolute top-3 bottom-[-24px] w-px" style={{ backgroundColor: "var(--hairline)" }} />}
                       <span
-                        className="relative mt-1 rounded-full ring-4 ring-white dark:ring-[#1f1f21]"
+                        className="relative mt-1 rounded-full ring-4 ring-[color:var(--surface-modal)]"
                         style={{ width: 8, height: 8, backgroundColor: "var(--text-4)" }}
                       />
                     </div>

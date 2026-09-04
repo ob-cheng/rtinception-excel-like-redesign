@@ -11,6 +11,8 @@ export type Idea = {
   rtiYear: string;
   atpProduct: string;
   project: string;
+  comparator: string;
+  studyName: string;
   strategicImperatives: string;
   researchQuestions: string;
   potentialClaims: string;
@@ -43,7 +45,12 @@ export type Idea = {
 export const FUNDED_STATUS = "Funded";
 export const STATUS_OPTIONS = ["Proposed", "Under Review", "Approved", "Funded", "Declined"];
 
-export type Column = { key: keyof Idea; label: string; width?: number; options?: string[]; tooltip?: boolean };
+// `note` is optional plain-language guidance for filling the column. When present it surfaces as an
+// info affordance in the column header, so anyone entering data sees how to fill it. Keep the copy
+// short and simple — write it so a third-grader could follow it.
+// `align: "right"` marks numeric / currency columns so both the header label and the body cells
+// right-align and use tabular figures — decimals and thousands then line up column-to-column.
+export type Column = { key: keyof Idea; label: string; width?: number; options?: string[]; tooltip?: boolean; note?: string; align?: "right" };
 
 export type ViewKey = "Franchise" | "Evidence Function" | "Funded";
 

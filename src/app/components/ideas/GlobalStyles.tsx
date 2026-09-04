@@ -10,6 +10,14 @@ export function GlobalStyles() {
       }
       .pop-in { animation: popIn 0.16s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: top right; }
 
+      /* Dematerialize: the exact reverse of popIn, so the surface leaves the way it arrived
+         (enter and exit share one path). Held on the last frame with 'forwards'. */
+      @keyframes popOut {
+        from { opacity: 1; transform: translateY(0) scale(1);       filter: blur(0); }
+        to   { opacity: 0; transform: translateY(-4px) scale(0.97); filter: blur(2px); }
+      }
+      .pop-out { animation: popOut 0.13s cubic-bezier(0.3, 0, 0.8, 0.15) forwards; transform-origin: top right; pointer-events: none; }
+
       /* View swap: the incoming columns arrive from the side the tab moved toward, so the
          tab strip and the content agree about direction. --enter carries the sign.
          The UID column never gets this class — it's the spine the rows are identified by,
@@ -50,22 +58,43 @@ export function GlobalStyles() {
          hover wash (which is exactly what left the add-new row's frozen cells flat). */
       tr.row-tr:hover td.frozen { background: var(--row-hover); }
       td.frozen[data-active="true"] { background: var(--freeze-active, var(--freeze-bg, #fff)); }
+      /* The frozen block's right edge: a crisp hairline at rest (so the grid looks normal), but
+         once the block pins the divider gives way to a soft scroll-shadow gradient — depth, not a
+         doubled line. The border lives here (not inline on the cell) so the .freeze-on state can
+         fade it to transparent; the two transition together for a clean handoff. */
+      td.frozen-last { border-right: 1px solid var(--hairline-soft); transition: border-color 0.18s ease; }
+      th.frozen-last { border-right: 1px solid var(--hairline); transition: border-color 0.18s ease; }
+      .freeze-on td.frozen-last,
+      .freeze-on th.frozen-last { border-right-color: transparent; }
       /* The pinned block casts a shadow like one floating panel, not a stack of cells. A per-cell
          box-shadow blurs vertically and rounds at each row edge, scalloping into a "curl"; instead
          each frozen-last cell paints a full-height gradient strip just past its right edge, so the
-         strips tile seamlessly down the column into a single continuous panel edge. It only appears
-         once the block is actually pinned (.freeze-on past the scroll threshold). */
-      .freeze-on td.frozen-last::after,
-      .freeze-on th.frozen-last::after {
+         strips tile seamlessly down the column into a single continuous panel edge. The strip is
+         always present but transparent, and fades in only once the block is actually pinned
+         (.freeze-on past the scroll threshold) — so the divider→shadow handoff is smooth. */
+      td.frozen-last::after,
+      th.frozen-last::after {
         content: "";
         position: absolute;
         top: 0;
         bottom: 0;
         left: 100%;
-        width: 16px;
+        width: 22px;
         pointer-events: none;
-        background: linear-gradient(to right, rgba(0,0,0,0.13), rgba(0,0,0,0.05) 42%, rgba(0,0,0,0));
+        opacity: 0;
+        transition: opacity 0.18s ease;
+        /* Give the strip its own compositor layer so its opacity animates on the compositor.
+           Without this, the header's frozen-last cell is sticky on BOTH axes (top:0 + left),
+           so the browser promotes it to a cached tile and never re-rasterizes this pseudo when
+           .freeze-on is removed on scroll-back — leaving a stale shadow on the header only,
+           while the body cells (sticky on one axis) repaint fine. translateZ(0) + will-change
+           move the fade onto the compositor, which invalidates correctly in both directions. */
+        transform: translateZ(0);
+        will-change: opacity;
+        background: linear-gradient(to right, var(--freeze-shadow), color-mix(in srgb, var(--freeze-shadow) 50%, transparent) 38%, color-mix(in srgb, var(--freeze-shadow) 16%, transparent) 72%, transparent);
       }
+      .freeze-on td.frozen-last::after,
+      .freeze-on th.frozen-last::after { opacity: 1; }
 
       /* Sidebar nav items — driven by tokens so the rail can be brand-navy in light
          and a neutral gray with an accent-tinted selection in dark. */
@@ -104,6 +133,11 @@ export function GlobalStyles() {
           to   { opacity: 1; }
         }
         .pop-in { animation: popIn 0.12s ease; }
+        @keyframes popOut {
+          from { opacity: 1; }
+          to   { opacity: 0; }
+        }
+        .pop-out { animation: popOut 0.1s ease forwards; }
         @keyframes colEnter {
           from { opacity: 0; }
           to   { opacity: 1; }
@@ -111,6 +145,7 @@ export function GlobalStyles() {
         .col-enter { animation: colEnter 0.14s ease backwards; }
         @keyframes stepFade { from { opacity: 0; } to { opacity: 1; } }
         .step-fade { animation: stepFade 0.12s ease both; }
+        @keyframes tooltip-in { from { opacity: 0; } to { opacity: 1; } }
         *, *::before, *::after {
           transition-property: opacity, color, background-color, border-color !important;
           transition-duration: 0.12s !important;
@@ -126,6 +161,134 @@ export function GlobalStyles() {
       /* §14 Increased contrast — give floating surfaces a defined border. */
       @media (prefers-contrast: more) {
         .surface-pop { border-color: rgba(17, 24, 39, 0.55) !important; }
+      }
+
+      /* ── Notification toasts (Sonner, stripped to the app's language) ────────────
+         Gmail's undo toast is the reference for a reversible action: plain text, one plain
+         button, nothing decorative. So this is a quiet sheet of the app's own glass
+         (--surface-raised, §12) — no icon tiles, no tinted panels, no invented colors.
+         • Status reads from a small PLAIN glyph (no box), colored from tokens only:
+           error = --destructive, success = a measured emerald; default/info stays neutral.
+         • The action is LITERALLY the app's secondary pill button (see PageHeader's
+           "Prioritize"): --surface fill, --hairline border, lifts to --surface-2 on hover,
+           scales on press (§1) — so a toast button is the same object as a header button.
+         • Hierarchy is weight + size + tracking (§15); the sheet materializes on enter (§12). */
+      [data-sonner-toaster] {
+        --width: 356px;
+        --toast-ok: #157f56;              /* measured emerald — not candy */
+        font-family: "Open Sans", system-ui, -apple-system, sans-serif;
+      }
+      .dark [data-sonner-toaster],
+      [data-sonner-toaster].dark { --toast-ok: #4ccb92; }  /* lifted so it reads on near-black */
+
+      [data-sonner-toast].app-toast {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        width: var(--width);
+        padding: 13px 14px;
+        /* Identical floating recipe to the row menus (RowMenu / RowContextMenu) so a toast reads
+           as the same glass surface: same radius, blur, hairline, and lifted shadow. */
+        border-radius: 16px;
+        background: var(--surface-raised);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid var(--hairline);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+        color: var(--text-1);
+      }
+
+      /* Status glyph — plain, no container. Sonner puts its check/error svg in [data-icon]. */
+      [data-sonner-toast].app-toast [data-icon] {
+        flex: 0 0 auto;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        color: var(--text-3);             /* neutral by default (e.g. the Lock notice) */
+      }
+      [data-sonner-toast].app-toast [data-icon] > svg { width: 16px; height: 16px; }
+      [data-sonner-toast].app-toast[data-type="success"] [data-icon] { color: var(--toast-ok); }
+      [data-sonner-toast].app-toast[data-type="error"]   [data-icon] { color: var(--destructive); }
+
+      /* Content column grows; hierarchy is weight + size + tracking, not saturation (§15). */
+      [data-sonner-toast].app-toast [data-content] { flex: 1 1 auto; min-width: 0; }
+      [data-sonner-toast].app-toast [data-title] {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.35;
+        letter-spacing: -0.008em;
+        color: var(--text-1);
+      }
+      [data-sonner-toast].app-toast [data-description] {
+        font-size: 12.5px;
+        font-weight: 400;
+        line-height: 1.45;
+        letter-spacing: 0;
+        color: var(--text-3);
+        margin-top: 2px;
+      }
+
+      /* Action ("Undo") — the app's secondary pill, copied from PageHeader's Prioritize
+         button so it reads as the same component: surface fill, hairline, lift on hover,
+         scale on press (§1). No accent tint, no invented style. */
+      [data-sonner-toast].app-toast [data-button] {
+        flex: 0 0 auto;
+        height: 30px;
+        padding: 0 14px;
+        border-radius: 9999px;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: -0.003em;
+        color: var(--text-2);
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        transition: background-color 0.12s ease, box-shadow 0.12s ease, transform 0.1s ease-out;
+      }
+      [data-sonner-toast].app-toast [data-button]:hover {
+        background: var(--surface-2);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      }
+      [data-sonner-toast].app-toast [data-button]:active { transform: scale(0.97); }
+
+      /* Manual dismissal, kept quiet: the close control is invisible until the pointer is over
+         the toast (or it receives keyboard focus), so it satisfies WCAG 2.2.1 without cluttering
+         the resting state. Swipe-to-dismiss and Esc remain available on top of it. */
+      [data-sonner-toast].app-toast [data-close-button] {
+        opacity: 0;
+        color: var(--text-3);
+        background: var(--surface-raised);
+        border: 1px solid var(--hairline);
+        transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+      [data-sonner-toast].app-toast:hover [data-close-button],
+      [data-sonner-toast].app-toast [data-close-button]:focus-visible { opacity: 1; }
+      [data-sonner-toast].app-toast [data-close-button]:hover {
+        color: var(--text-1);
+        background: var(--fill-subtle);
+      }
+
+      /* Materialize: layer a blur-settle onto Sonner's own (interruptible, swipeable) enter
+         so the sheet reads as glass arriving — matching popIn, not a plain slide (§12).
+         Sonner keeps owning transform/opacity/height; we only add filter. */
+      [data-sonner-toast].app-toast {
+        transition: transform 0.4s, opacity 0.4s, filter 0.4s, height 0.4s, box-shadow 0.2s;
+      }
+      [data-sonner-toast].app-toast[data-mounted="false"] { filter: blur(3px); }
+      [data-sonner-toast].app-toast[data-removed="true"]   { filter: blur(3px); }
+
+      @media (prefers-reduced-motion: reduce) {
+        [data-sonner-toast].app-toast { filter: none !important; transition: opacity 0.14s ease; }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        [data-sonner-toast].app-toast {
+          background: var(--surface-modal) !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+      }
+      @media (prefers-contrast: more) {
+        [data-sonner-toast].app-toast { border-color: color-mix(in srgb, var(--text-1) 45%, transparent) !important; }
       }
     `}</style>
   );

@@ -276,12 +276,13 @@ export function PrioritizeModal({
         role="dialog"
         aria-modal="true"
         aria-label="Prioritize records"
-        className="relative flex flex-col rounded-[20px] overflow-hidden bg-white dark:bg-[#1f1f21]"
+        className="relative flex flex-col rounded-[20px] overflow-hidden"
         style={{
+          backgroundColor: "var(--surface-modal)",
           width: size ? size.w : targetWidth,
           height: size ? size.h : "auto",
           maxHeight: "90vh",
-          boxShadow: "0 32px 80px -16px rgba(15,23,42,0.42), 0 0 0 1px rgba(0,0,0,0.05)",
+          boxShadow: "0 32px 80px -16px rgba(15,23,42,0.42), 0 0 0 1px var(--hairline)",
           opacity: visible ? 1 : 0,
           transform: visible ? "scale(1) translateY(0)" : "scale(0.96) translateY(12px)",
           transition: ready
@@ -351,7 +352,7 @@ export function PrioritizeModal({
                           onClick={() => pickScope(opt.name)}
                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:bg-black/[0.07] dark:active:bg-white/10 transition-colors duration-100"
                         >
-                          <span className="shrink-0 grid place-items-center w-9 h-9 rounded-[10px] text-white" style={{ backgroundColor: "var(--accent-strong)" }}>
+                          <span className="shrink-0 grid place-items-center w-9 h-9 rounded-[12px] text-white" style={{ backgroundColor: "var(--accent-strong)" }}>
                             {persona === "brand"
                               ? <Eye size={16} strokeWidth={2} />
                               : <span className="text-[11px] font-semibold tracking-wide">{PORTFOLIO_ABBR[opt.name] ?? <Layers size={16} />}</span>}
@@ -484,7 +485,7 @@ function PersonaCard({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-start gap-3 p-4 rounded-[14px] text-left bg-white/70 dark:bg-white/[0.03] hover:bg-white dark:hover:bg-[#1f1f21] active:scale-[0.98] transition-all duration-100"
+      className="flex flex-col items-start gap-3 p-4 rounded-[16px] text-left bg-white/70 dark:bg-white/[0.03] hover:bg-white dark:hover:bg-[#1f1f21] active:scale-[0.98] transition-all duration-100"
       style={{ border: "1px solid var(--hairline)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}
     >
       <span className="grid place-items-center w-11 h-11 rounded-[12px]" style={{ backgroundColor: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent)" }}>
@@ -593,7 +594,7 @@ function PriorityCard({
   const hasBrandRank = Number.isFinite(brandRankNum);
   return (
     <div
-      className="relative flex items-center gap-3 px-4 py-3 rounded-[13px] bg-white dark:bg-[#1f1f21] select-none"
+      className="relative flex items-center gap-3 px-4 py-3 rounded-[12px] bg-white dark:bg-[#1f1f21] select-none"
       style={{
         border: isOverlay ? "1px solid rgba(13,45,107,0.15)" : "1px solid var(--hairline)",
         boxShadow: isOverlay
@@ -677,7 +678,7 @@ function PriorityCard({
             onClick={() => onNudge(-1)}
             disabled={index === 0}
             aria-label="Move up"
-            className="grid place-items-center w-7 h-7 rounded-md text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-all duration-100"
+            className="grid place-items-center w-7 h-7 rounded-[8px] text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-all duration-100"
           >
             <ChevronUp size={14} strokeWidth={2.2} />
           </button>
@@ -685,7 +686,7 @@ function PriorityCard({
             onClick={() => onNudge(1)}
             disabled={index === total - 1}
             aria-label="Move down"
-            className="grid place-items-center w-7 h-7 rounded-md text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-all duration-100"
+            className="grid place-items-center w-7 h-7 rounded-[8px] text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-all duration-100"
           >
             <ChevronDown size={14} strokeWidth={2.2} />
           </button>

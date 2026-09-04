@@ -20,7 +20,7 @@ export function ViewTabs({
           <button
             key={v}
             ref={el => { tabRefs.current[i] = el; }}
-            onClick={() => onSelect(v)}
+            onPointerDown={() => onSelect(v)}
             className={`flex items-center gap-1.5 px-4 py-[9px] text-[13.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
               pendingView === v ? "font-semibold text-[color:var(--text-1)]" : "font-medium text-[color:var(--text-3)] hover:text-[color:var(--text-2)]"
             }`}

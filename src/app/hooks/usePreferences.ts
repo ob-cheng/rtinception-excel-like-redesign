@@ -42,8 +42,11 @@ export function usePreferences() {
     window.localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
+  // Debounce the zoom write: the −/+ controls can fire several steps in a burst, and only the
+  // final resting value needs to survive a reload.
   useEffect(() => {
-    window.localStorage.setItem(ZOOM_KEY, String(zoom));
+    const id = setTimeout(() => window.localStorage.setItem(ZOOM_KEY, String(zoom)), 250);
+    return () => clearTimeout(id);
   }, [zoom]);
 
   // Switch appearance with an elegant, whole-screen cross-fade — like a light

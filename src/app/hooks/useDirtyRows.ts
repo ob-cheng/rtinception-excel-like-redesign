@@ -28,15 +28,23 @@ export function useDirtyRows(rows: Idea[]) {
     // A flush is happening now — cancel any pending idle timer so it doesn't
     // fire a redundant empty flush a moment later.
     if (idleTimer.current) { clearTimeout(idleTimer.current); idleTimer.current = null; }
-    const toSave = uids ?? Array.from(dirtyRows.current);
+    const toSave = (uids ?? Array.from(dirtyRows.current)).filter(uid => !savingRows.current.has(uid));
+    if (toSave.length === 0) return;
+
+    // Mark the whole batch saving up front, then persist all rows concurrently. A serial loop paid
+    // N × latency (each row's save awaited before the next began); Promise.all overlaps them so the
+    // batch finishes in roughly one round-trip. Swap the simulated call for a bulk endpoint when a
+    // real API exists, and this becomes a single request.
     for (const uid of toSave) {
-      if (savingRows.current.has(uid)) continue;
       savingRows.current.add(uid);
       dirtyRows.current.delete(uid);
-      syncDirtyState();
-      syncSavingState();
+    }
+    syncDirtyState();
+    syncSavingState();
+
+    await Promise.all(toSave.map(async uid => {
       const row = rowsRef.current.find(r => r.uid === uid);
-      if (!row) { savingRows.current.delete(uid); syncSavingState(); continue; }
+      if (!row) { savingRows.current.delete(uid); return; }
       try {
         // Simulated API call — replace with real fetch/axios call
         await new Promise<void>((res, rej) =>
@@ -45,12 +53,13 @@ export function useDirtyRows(rows: Idea[]) {
       } catch {
         dirtyRows.current.add(uid);
         toast.error(`Failed to save ${uid}`, { description: "Will retry on next change." });
-        syncDirtyState();
       } finally {
         savingRows.current.delete(uid);
-        syncSavingState();
       }
-    }
+    }));
+
+    syncDirtyState();
+    syncSavingState();
   }, [syncDirtyState, syncSavingState]);
 
   const markDirty = useCallback((uid: string) => {

@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Lock, PenLine, Sparkles, X } from "lucide-react";
+import { PenLine, Sparkles, X } from "lucide-react";
 import type { Idea } from "../../types";
-import { isLocked, LOCK_REASON } from "../../lib/locking";
 
 export function IdeaDetailPanel({
-  row,
+  row: rowProp,
   onClose,
   onEdit,
 }: {
@@ -14,19 +13,29 @@ export function IdeaDetailPanel({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  // Keep the last row mounted through the slide-OUT so the panel exits along the same path
+  // it entered (§7). `rowProp` drives intent; `shownRow` keeps content on screen until the exit
+  // transition (0.4s, matching the transform below) finishes, then we unmount. The effects below
+  // MUST key off `rowProp` (the real prop), never the displayed row — otherwise the close render
+  // wouldn't tear down the Escape listener and it would leak.
+  const [shownRow, setShownRow] = useState<Idea | null>(rowProp);
 
-  // Animate in on mount, out before unmount
   useEffect(() => {
-    if (row) {
-      requestAnimationFrame(() => setVisible(true));
-    } else {
-      setVisible(false);
+    if (rowProp) {
+      setShownRow(rowProp);
+      const id = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(id);
     }
-  }, [row]);
+    setVisible(false);
+    const t = setTimeout(() => setShownRow(null), 400);
+    return () => clearTimeout(t);
+  }, [rowProp]);
 
-  // Escape to dismiss + focus trap
+  // Escape to dismiss + focus trap. Keyed to `rowProp` so closing (rowProp → null) re-runs this
+  // effect and its cleanup removes the global listener; keying it to the displayed row would strand
+  // the listener because the displayed row lingers through the exit animation.
   useEffect(() => {
-    if (!row) return;
+    if (!rowProp) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
@@ -34,11 +43,11 @@ export function IdeaDetailPanel({
     // Move focus into panel
     panelRef.current?.focus();
     return () => document.removeEventListener("keydown", onKey);
-  }, [row, onClose]);
+  }, [rowProp, onClose]);
 
-  if (!row) return null;
-
-  const locked = isLocked(row);
+  if (!shownRow) return null;
+  // The row rendered below is the persisted one (survives the exit); intent lives in `rowProp`.
+  const row = shownRow;
 
   // The specification reads like a calm, iOS-Settings-style list — label left, value right,
   // separated by hairlines. No colored chips, no all-caps eyebrow on every field.
@@ -87,10 +96,12 @@ export function IdeaDetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Scrim */}
+      {/* Scrim — a right-side inspector, not a blocking task: a light dim (no blur) keeps the grid
+          legible behind so the panel reads as flowing alongside the content it describes (§ Depth),
+          while still catching a click-away to dismiss. */}
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity duration-300"
+        className="absolute inset-0 bg-black/10 transition-opacity duration-300"
         style={{ opacity: visible ? 1 : 0 }}
       />
 
@@ -101,9 +112,10 @@ export function IdeaDetailPanel({
         role="dialog"
         aria-modal="true"
         aria-label={`Idea details — ${row.uid}`}
-        className="absolute right-0 top-0 h-full w-[460px] max-w-full bg-white dark:bg-[#1f1f21] flex flex-col outline-none"
+        className="absolute right-0 top-0 h-full w-[460px] max-w-full flex flex-col outline-none"
         style={{
-          boxShadow: "-1px 0 0 rgba(0,0,0,0.04), -24px 0 60px -20px rgba(15,23,42,0.28)",
+          backgroundColor: "var(--surface-modal)",
+          boxShadow: "-1px 0 0 var(--depth-edge), -24px 0 60px -20px rgba(15,23,42,0.28)",
           transform: visible ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
         }}
@@ -114,14 +126,6 @@ export function IdeaDetailPanel({
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 mb-3">
                 <span className="font-mono text-[11px] tracking-[0.02em] text-gray-400 dark:text-gray-400">{row.uid}</span>
-                {locked && (
-                  <>
-                    <span className="text-gray-200 dark:text-gray-600">·</span>
-                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-400">
-                      <Lock size={11} strokeWidth={2} /> Locked
-                    </span>
-                  </>
-                )}
               </div>
               <h2 className="text-[26px] leading-[1.15] tracking-[-0.02em] text-gray-900 dark:text-gray-100 truncate">
                 {row.project || "Untitled idea"}
@@ -142,7 +146,7 @@ export function IdeaDetailPanel({
         <div className="flex-1 overflow-y-auto px-7 pb-8">
 
           {/* Hero — the aspirational claim leads, set large and confident. */}
-          <div className="rounded-2xl px-5 py-5" style={{ backgroundColor: "var(--fill-subtle)" }}>
+          <div className="rounded-[16px] px-5 py-5" style={{ backgroundColor: "var(--fill-subtle)" }}>
             <div className="flex items-center gap-1.5 mb-2.5">
               <Sparkles size={13} strokeWidth={2} style={{ color: "var(--accent)" }} />
               <p className="text-[11px] font-medium tracking-[0.01em]" style={{ color: "var(--accent)" }}>Potential claims</p>
@@ -231,23 +235,16 @@ export function IdeaDetailPanel({
           </div>
         </div>
 
-        {/* Footer — one clear action, or a calm lock explanation. */}
+        {/* Footer — one clear action. */}
         <div className="shrink-0 px-7 py-4 border-t border-gray-100 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur">
-          {locked ? (
-            <div className="flex items-start gap-2.5 px-4 py-3 bg-gray-50 dark:bg-white/5 rounded-2xl text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
-              <Lock size={14} strokeWidth={2} className="text-gray-400 dark:text-gray-400 mt-px shrink-0" />
-              {LOCK_REASON}
-            </div>
-          ) : (
-            <button
-              onClick={() => { onEdit(row); onClose(); }}
-              className="flex items-center justify-center gap-2 w-full h-11 rounded-full text-[14px] font-medium active:scale-[0.99] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent-ring)]"
-              style={{ backgroundColor: "var(--accent-strong)", color: "var(--on-accent)" }}
-            >
-              <PenLine size={15} strokeWidth={2} />
-              Edit idea
-            </button>
-          )}
+          <button
+            onClick={() => { onEdit(row); onClose(); }}
+            className="flex items-center justify-center gap-2 w-full h-11 rounded-full text-[14px] font-medium active:scale-[0.99] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent-ring)]"
+            style={{ backgroundColor: "var(--accent-strong)", color: "var(--on-accent)" }}
+          >
+            <PenLine size={15} strokeWidth={2} />
+            Edit idea
+          </button>
         </div>
       </div>
     </div>

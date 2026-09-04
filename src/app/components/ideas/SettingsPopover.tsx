@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import type { Theme } from "../../hooks/usePreferences";
 import { currentUser } from "../../lib/theme";
@@ -28,22 +28,35 @@ export function SettingsPopover({
   canZoomOut: boolean;
   onClose: () => void;
 }) {
+  // Play the dematerialize before the parent unmounts us, so the popover exits along the same
+  // pop path it entered (§7). requestClose flips to pop-out; animationend calls the real onClose.
+  const [closing, setClosing] = useState(false);
+  const requestClose = useCallback(() => setClosing(true), []);
+
   // Esc closes — never trap the user (Wayfinding, §16).
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") requestClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [requestClose]);
+
+  // Fallback: unmount even if pop-out animationend never fires (animations disabled).
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(onClose, 220);
+    return () => window.clearTimeout(t);
+  }, [closing, onClose]);
 
   return (
     <>
       {/* Click-away scrim (invisible) */}
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-40" onPointerDown={requestClose} />
 
       <div
         role="dialog"
         aria-label="Settings"
-        className="pop-in absolute z-50 w-max min-w-[210px] rounded-[18px] p-1.5"
+        onAnimationEnd={() => { if (closing) onClose(); }}
+        className={`${closing ? "pop-out" : "pop-in"} absolute z-50 w-max min-w-[210px] rounded-[16px] p-1.5`}
         style={{
           bottom: 0,
           left: "calc(100% + 12px)",

@@ -49,6 +49,25 @@
   --avatar-bottom: #0a2458;
 
   --font-size: 15px;
+
+  /* Type scale (§15). Each step is a size; leading + tracking are applied per step in
+     the @layer base rules below — large text tracks tighter and leads tighter, body
+     sits near 0 / comfortable. Utilities (text-sm, text-lg…) still override these. */
+  --text-2xl: 24px;
+  --text-xl: 20px;
+  --text-lg: 17px;
+  --text-base: 15px;
+  --text-sm: 13px;
+
+  /* Depth cues, tokenized so they adapt to the theme instead of baking black into
+     near-black (§12). --depth-edge: structural right-edge line on rails/panels;
+     --freeze-shadow: strong stop of the pinned-column scroll shadow; --cell-ring:
+     selected-cell outline; --surface-modal: opaque floating modal/panel body. */
+  --depth-edge: rgba(0,0,0,0.07);
+  --freeze-shadow: rgba(0,0,0,0.11);
+  --cell-ring: rgba(13,45,107,0.55);
+  --surface-modal: #ffffff;
+
   --background: #f4f6f9;
   --foreground: #1a1a2e;
   --card: #ffffff;
@@ -126,6 +145,15 @@
   --accent-ring: rgba(91,157,248,0.45); /* focus ring, brighter to read on dark */
   --on-accent: #ffffff;
   --shadow-card: 0 4px 16px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
+
+  /* Depth cues (dark): edges lift to a light hairline; the pinned-column shadow deepens
+     to a real black so it still reads over near-black; the cell ring uses the lifted
+     accent blue; the modal body sits one tone above --surface so a floating layer reads
+     as thicker than the structural body (§12). */
+  --depth-edge: rgba(255,255,255,0.10);
+  --freeze-shadow: rgba(0,0,0,0.55);
+  --cell-ring: rgba(91,157,248,0.75);
+  --surface-modal: #252528;
 
   /* Sidebar (dark) — a neutral gray rail, one step above the window, separated by a
      hairline. Brand color appears only on the selected item (accent tint + accent
@@ -243,25 +271,29 @@
   h1 {
     font-size: var(--text-2xl);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    line-height: 1.2;
+    letter-spacing: -0.021em;
   }
 
   h2 {
     font-size: var(--text-xl);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    line-height: 1.25;
+    letter-spacing: -0.018em;
   }
 
   h3 {
     font-size: var(--text-lg);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    line-height: 1.3;
+    letter-spacing: -0.012em;
   }
 
   h4 {
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    line-height: 1.4;
+    letter-spacing: -0.006em;
   }
 
   label {

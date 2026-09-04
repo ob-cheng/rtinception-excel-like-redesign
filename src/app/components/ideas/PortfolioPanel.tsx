@@ -29,14 +29,14 @@ export function PortfolioPanel({
       <button
         onClick={() => onSelect(pKey)}
         title={label}
-        className={`relative w-full flex items-center gap-2 rounded-[9px] text-left transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
+        className={`relative w-full flex items-center gap-2 rounded-full text-left transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
           isActive
             ? "shadow-[0_1px_3px_rgba(0,0,0,0.22)]"
             : "text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-gray-100 hover:shadow-[0_1px_3px_rgba(0,0,0,0.07)]"
         }`}
         style={{
-          minHeight: 33,
-          padding: open ? "6px 10px" : "6px 0",
+          minHeight: 34,
+          padding: open ? "7px 12px" : "6px 0",
           backgroundColor: isActive ? "var(--accent-strong)" : undefined,
           color: isActive ? "var(--on-accent)" : undefined,
           justifyContent: open ? undefined : "center",
@@ -44,11 +44,11 @@ export function PortfolioPanel({
       >
         {open ? (
           <>
-            <span className={`text-[12.5px] leading-snug flex-1 min-w-0 truncate ${isActive ? "font-medium" : ""}`}>
+            <span className={`text-[13px] leading-snug flex-1 min-w-0 truncate ${isActive ? "font-medium" : ""}`}>
               {label}
             </span>
             <span
-              className={`shrink-0 text-[10.5px] tabular-nums rounded-full px-[6px] py-px font-semibold ${
+              className={`shrink-0 text-[11px] tabular-nums rounded-full px-[7px] py-px font-semibold ${
                 isActive
                   ? "bg-white/20 text-white"
                   : count > 0
@@ -76,16 +76,16 @@ export function PortfolioPanel({
     <div
       className="relative shrink-0 flex flex-col overflow-hidden"
       style={{
-        width: open ? 220 : 54,
+        width: open ? 234 : 54,
         transition: "width 0.3s cubic-bezier(0.16,1,0.3,1)",
         backgroundColor: "var(--surface-2)",
-        boxShadow: "1px 0 0 rgba(0,0,0,0.07)",
+        boxShadow: "1px 0 0 var(--depth-edge)",
       }}
     >
       {/* Header */}
       <div className="shrink-0 flex items-center" style={{ height: 56 }}>
         {open ? (
-          <div className="flex items-center justify-between w-full px-3 pr-2">
+          <div className="flex items-center justify-between w-full px-5 pr-3">
             <div className="flex items-center gap-2 select-none">
               <Layers size={12} strokeWidth={2.2} className="text-gray-400 dark:text-gray-400 shrink-0" />
               <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-400 tracking-[0.06em] uppercase">
@@ -95,7 +95,7 @@ export function PortfolioPanel({
             <button
               onClick={onToggle}
               title="Collapse"
-              className="p-1.5 rounded-lg text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06] active:scale-95 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
+              className="p-1.5 rounded-full text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06] active:scale-95 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
             >
               <PanelCollapse size={13} strokeWidth={2} />
             </button>
@@ -112,7 +112,10 @@ export function PortfolioPanel({
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto pb-3" style={{ padding: open ? "0 8px 12px" : "0 6px 12px" }}>
+      {/* An 8px gutter gives the capsules room to breathe off the panel edges, while the row
+          content (8px gutter + 12px capsule inset = 20px) still shares one left edge with the
+          "Portfolio" header icon (px-5 = 20px) — Craft: a single, deliberate left line. */}
+      <div className="flex-1 overflow-y-auto" style={{ padding: open ? "2px 8px 14px" : "0 8px 14px" }}>
         {/* All portfolios */}
         <PortfolioRow label="All portfolios" pKey="All" />
 
@@ -120,7 +123,7 @@ export function PortfolioPanel({
         <div className="my-2" style={{ borderTop: "1px solid var(--hairline)" }} />
 
         {/* Individual portfolios */}
-        <div className="flex flex-col gap-[2px]">
+        <div className="flex flex-col gap-[3px]">
           {PORTFOLIOS.map(p => (
             <PortfolioRow key={p} label={p} pKey={p} />
           ))}

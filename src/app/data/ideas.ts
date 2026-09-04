@@ -88,8 +88,68 @@ const seedIdeas: Idea[] = [
   { uid: "OH203",  franchise: "Pharmaceutical", area: "Retina", status: "Funded", brandRanking: "3", areaPrioritization: "6", pathway: "HEOR",      rtiYear: "2027", atpProduct: "Ozurdex", project: "Ozurdex", strategicImperatives: "Show burden-reduction value",               researchQuestions: "Does sustained-release dosing reduce total visits and injections vs. anti-VEGF?", potentialClaims: "Fewer clinic visits per year",             totalIndirect: "", totalDirect: "", totalCost: "$95,000",  total2027Indirect: "", total2027Direct: "", total2027Cost: "$95,000",  primaryEndpoint: "Clinic visits per year",           secondaryEndpoint: "Total injections per year",      otherEndpoints: "Caregiver burden score",       studyDesign: "Retrospective claims", proposedStatistics: "Visits powered at 80%", sampleSize: "2,000 claims", pos: "55%", region: "USA", startDate: "Q2 2027", endDate: "Q2 2028", regionalFeedback: "", comments: "", portfolio: "Ocular Health" },
 ];
 
-// Every seed row gets an explicit lifecycle status — those not pre-set default to "Proposed"
-// so the Status column reads cleanly rather than showing blanks across the pipeline.
-export const initialIdeas: Idea[] = seedIdeas.map(r => ({ ...r, status: r.status ?? "Proposed" }));
+// The distinct products a study can be run on or compared against — derived from the seed data so
+// it always matches the catalog. Powers the Comparator column's dropdown (see COMPARATOR_OPTIONS).
+export const PRODUCT_NAMES: string[] = [...new Set(seedIdeas.map(r => r.project))].sort();
 
-export const emptyDraft: Idea = { status: "Proposed", uid: "", franchise: "", area: "", brandRanking: "", areaPrioritization: "", pathway: "", rtiYear: "", atpProduct: "", project: "", strategicImperatives: "", researchQuestions: "", potentialClaims: "", totalIndirect: "", totalDirect: "", totalCost: "", total2027Indirect: "", total2027Direct: "", total2027Cost: "", primaryEndpoint: "", secondaryEndpoint: "", otherEndpoints: "", studyDesign: "", proposedStatistics: "", sampleSize: "", pos: "", region: "", startDate: "", endDate: "", regionalFeedback: "", comments: "", portfolio: "" };
+// Which comparators are valid for each product. The comparator a study uses depends on which
+// product it's studying, so every product carries its OWN allowed list. This is mock data for now —
+// generated deterministically (each product's comparators are the next few products in the catalog)
+// — but it's kept as a real, editable map so the true product→comparator relationships can be
+// dropped in later without touching the grid wiring.
+export const COMPARATORS_BY_PRODUCT: Record<string, string[]> = Object.fromEntries(
+  PRODUCT_NAMES.map((product, i) => {
+    const others = PRODUCT_NAMES.filter(p => p !== product);
+    // 2–3 comparators per product, taken cyclically so each product gets a distinct set.
+    const count = 2 + (i % 2);
+    const picks = Array.from({ length: count }, (_, k) => others[(i + k) % others.length]);
+    return [product, [...new Set(picks)]];
+  }),
+);
+
+// The Comparator dropdown options for a given product: always "None", then that product's own
+// allowed comparators. Unknown/blank product → just "None".
+export function comparatorOptionsFor(project: string): string[] {
+  return ["None", ...(COMPARATORS_BY_PRODUCT[project] ?? [])];
+}
+
+// Deterministic mock comparator for a row: roughly a third of rows have no comparator arm ("None"),
+// the rest pick one of that product's own allowed comparators — so seeded values are always valid
+// for the row's product.
+function mockComparator(row: Idea, i: number): string {
+  const opts = COMPARATORS_BY_PRODUCT[row.project] ?? [];
+  if (i % 3 === 0 || opts.length === 0) return "None";
+  return opts[i % opts.length];
+}
+
+// Split a "$170,000"-style total into mock Indirect + Direct parts (≈40% / ≈60%) that add back up
+// to the total, so the cost breakdown columns read as coherent mock data rather than blanks.
+function splitCost(total: string): { indirect: string; direct: string } {
+  const n = Number(total.replace(/[^0-9.]/g, ""));
+  if (!n) return { indirect: "", direct: "" };
+  const indirect = Math.round(n * 0.4);
+  return {
+    indirect: `$${indirect.toLocaleString("en-US")}`,
+    direct: `$${(n - indirect).toLocaleString("en-US")}`,
+  };
+}
+
+// Every seed row gets an explicit lifecycle status — those not pre-set default to "Proposed"
+// so the Status column reads cleanly rather than showing blanks across the pipeline. Seed rows also
+// get mock Comparator values and a mock Indirect/Direct cost breakdown (the seed literals leave
+// those fields blank), derived from the existing study-cost totals.
+export const initialIdeas: Idea[] = seedIdeas.map((r, i) => {
+  const now = splitCost(r.totalCost);
+  const y2027 = splitCost(r.total2027Cost);
+  return {
+    ...r,
+    status: r.status ?? "Proposed",
+    comparator: r.comparator || mockComparator(r, i),
+    totalIndirect: r.totalIndirect || now.indirect,
+    totalDirect: r.totalDirect || now.direct,
+    total2027Indirect: r.total2027Indirect || y2027.indirect,
+    total2027Direct: r.total2027Direct || y2027.direct,
+  };
+});
+
+export const emptyDraft: Idea = { status: "Proposed", uid: "", franchise: "", area: "", brandRanking: "", areaPrioritization: "", pathway: "", rtiYear: "", atpProduct: "", project: "", comparator: "", studyName: "", strategicImperatives: "", researchQuestions: "", potentialClaims: "", totalIndirect: "", totalDirect: "", totalCost: "", total2027Indirect: "", total2027Direct: "", total2027Cost: "", primaryEndpoint: "", secondaryEndpoint: "", otherEndpoints: "", studyDesign: "", proposedStatistics: "", sampleSize: "", pos: "", region: "", startDate: "", endDate: "", regionalFeedback: "", comments: "", portfolio: "" };
