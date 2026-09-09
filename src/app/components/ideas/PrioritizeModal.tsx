@@ -22,6 +22,7 @@ import { Eye, Briefcase, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Grip
 import type { Idea, RankingConfig, RankPersona } from "../../types";
 import { compareCells } from "../../lib/format";
 import { PORTFOLIO_ABBR } from "../../data/portfolios";
+import { useModalA11y } from "../../hooks/useModalA11y";
 
 type Step = "persona" | "scope" | "reorder";
 
@@ -119,6 +120,10 @@ export function PrioritizeModal({
     return m;
   }, [rows]);
 
+  // The id list SortableContext needs — recompute only when the order changes, not on every
+  // render during a drag (which re-renders this modal continuously).
+  const orderUids = useMemo(() => order.map(r => r.uid), [order]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       // Small movement required before drag activates — lets button clicks inside the card work.
@@ -128,6 +133,7 @@ export function PrioritizeModal({
   );
 
   // ── Size animation ────────────────────────────────────────────────────────
+  const overlayRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   // FLIP for button-driven reorders: capture card rects before the order changes, then animate
@@ -193,6 +199,9 @@ export function PrioritizeModal({
       );
     });
   }, [order]);
+
+  // Trap Tab inside the shell, inert the background, restore focus to the trigger on close (§A.4).
+  useModalA11y(mounted, overlayRef, shellRef);
 
   if (!mounted) return null;
 
@@ -261,7 +270,7 @@ export function PrioritizeModal({
       : { title: scope ?? "", sub: "Drag cards to reorder · top card is highest priority" };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ overscrollBehavior: "contain" }}>
       {/* Backdrop — separate layer so the shell itself has no backdrop-filter. That matters:
           filter/backdrop-filter on an ancestor would re-anchor the drag overlay's fixed
           positioning and make the dragged card jump. */}
@@ -386,7 +395,7 @@ export function PrioritizeModal({
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                   >
-                    <SortableContext items={order.map(r => r.uid)} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={orderUids} strategy={verticalListSortingStrategy}>
                       <ul ref={listRef} className="flex flex-col gap-2">
                         {order.map((row, index) => (
                           <SortableCard
@@ -561,12 +570,18 @@ function rankVisual(index: number, total: number) {
 }
 
 // A stable, low-saturation hue per brand so records from the same product are groupable even
-// when a Portfolio Director has interleaved several brands into one list.
+// when a Portfolio Director has interleaved several brands into one list. The hash→hsl result is
+// deterministic per name, so cache it — it's called once per card per render during drag reorders.
+const brandHueCache = new Map<string, string>();
 function brandHue(name: string): string {
   if (!name) return "#c7c7cc";
+  const cached = brandHueCache.get(name);
+  if (cached) return cached;
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-  return `hsl(${h}, 52%, 52%)`;
+  const color = `hsl(${h}, 52%, 52%)`;
+  brandHueCache.set(name, color);
+  return color;
 }
 
 // Shared card between list and DragOverlay. Layout order: ATP → Claims → Metrics.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock, X } from "lucide-react";
 import type { Idea } from "../../types";
 import { generateHistory } from "../../data/history";
@@ -40,7 +40,9 @@ export function IdeaHistoryPanel({
   if (!shownRow) return null;
   const row = shownRow;
 
-  const events = generateHistory(row);
+  // Rebuild the (mock) history only when the shown row changes, not on every panel re-render
+  // (slide-in visibility flips, parent renders while the panel is open).
+  const events = useMemo(() => generateHistory(row), [row]);
 
   return (
     <div className="fixed inset-0 z-50 flex">

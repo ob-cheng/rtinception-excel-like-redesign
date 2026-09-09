@@ -2,11 +2,19 @@
 // header band stays quiet next to the data. Domain abbreviations must survive that pass.
 const ABBREVIATIONS = new Set(["UID", "TA", "RTI", "ATP", "POS", "IIT", "AIT", "CSR", "ID"]);
 
+// The label set is fixed (one per column), so the title-case transform is memoized: every header
+// re-render (sort, filter open, swap) would otherwise re-split and re-map the same handful of strings.
+const headerLabelCache = new Map<string, string>();
+
 export function formatHeaderLabel(label: string): string {
-  return label
+  const cached = headerLabelCache.get(label);
+  if (cached !== undefined) return cached;
+  const formatted = label
     .split(" ")
     .map(w => (ABBREVIATIONS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
     .join(" ");
+  headerLabelCache.set(label, formatted);
+  return formatted;
 }
 
 export const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));

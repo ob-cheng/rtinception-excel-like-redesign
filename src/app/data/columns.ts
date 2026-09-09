@@ -20,6 +20,7 @@ export const columns: Column[] = [
   { key: "comparator",           label: "Comparator",                               width: 140, tooltip: true, options: [...COMPARATOR_OPTIONS] },
   { key: "studyName",            label: "Study Name",                               width: 160, tooltip: true,
     note: "Type a short, clear name for the study. Keep it simple — so simple a young student could read it and know what the study is about. Just a few words, no long sentences." },
+  { key: "proposalType",         label: "Proposal Type",                            width: 150, options: ["Global Shared Voice", "Regional Shared Voice", "Claim"] },
   { key: "strategicImperatives", label: "Strategic Imperatives",                    width: 250, tooltip: true },
   { key: "researchQuestions",    label: "Research Questions",                       width: 250, tooltip: true },
   { key: "potentialClaims",      label: "Potential Claims",                         width: 250, tooltip: true },
@@ -51,7 +52,7 @@ export const columns: Column[] = [
 // tab a record shows under (see the Funded filter in App), not a column users see or edit.
 const FRANCHISE_KEYS: (keyof Idea)[] = [
   "uid", "franchise", "area", "brandRanking", "areaPrioritization", "pathway",
-  "rtiYear", "atpProduct", "project", "comparator", "studyName", "strategicImperatives", "researchQuestions", "potentialClaims",
+  "rtiYear", "atpProduct", "project", "comparator", "studyName", "proposalType", "strategicImperatives", "researchQuestions", "potentialClaims",
   "pos", "region",
   "totalIndirect", "totalDirect", "totalCost", "total2027Indirect", "total2027Direct", "total2027Cost",
 ];
@@ -124,10 +125,10 @@ export const defaultHiddenKeys = (v: ViewKey): (keyof Idea)[] => HIDDEN_BY_VIEW[
 export const defaultColumnOrder = (v: ViewKey): (keyof Idea)[] =>
   VIEW_KEYS[v].filter(k => k !== "uid");
 
-// Franchise-owned columns that also appear in the Evidence Function tab for reference. There they
-// are read-only: Evidence can see the framing but only Franchise edits it. In Franchise/Funded they
-// behave like any other editable column.
-export const EVIDENCE_READONLY_KEYS: (keyof Idea)[] = ["pathway", "atpProduct", "project", "potentialClaims"];
+// Columns the Evidence Function tab can see but not edit — Potential Claims stays Franchise-owned,
+// so Evidence sees it for reference but only Franchise edits it. Everything else in the Evidence tab
+// is editable there.
+export const EVIDENCE_READONLY_KEYS: (keyof Idea)[] = ["potentialClaims"];
 
 // Columns each tab can see but not edit, because another team owns them: Evidence borrows the
 // Franchise-owned framing (including the research question). Absent tabs (Funded) stay fully
@@ -135,11 +136,12 @@ export const EVIDENCE_READONLY_KEYS: (keyof Idea)[] = ["pathway", "atpProduct", 
 const READONLY_BY_VIEW: Partial<Record<ViewKey, (keyof Idea)[]>> = {
   "Evidence Function": EVIDENCE_READONLY_KEYS,
   // Evidence owns the commercial/operational figures; Franchise sees them but can't edit them.
-  // Research Questions is Evidence-owned framing: editable in Evidence, read-only in Franchise.
+  // Research Questions and Research Pathway are Evidence-owned framing: editable in Evidence,
+  // read-only in Franchise.
   "Franchise": [
     "pos", "region",
     "totalIndirect", "totalDirect", "totalCost", "total2027Indirect", "total2027Direct", "total2027Cost",
-    "researchQuestions",
+    "researchQuestions", "pathway",
   ],
 };
 

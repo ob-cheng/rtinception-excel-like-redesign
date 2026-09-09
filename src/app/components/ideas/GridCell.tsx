@@ -2,6 +2,7 @@ import { memo, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown as Caret, Loader2 } from "lucide-react";
 import type { CellIndicator, Column, MoveDir } from "../../types";
+import { SelectField } from "./SelectField";
 
 const CELL_H = 54; // px — 2 lines × (13px × 1.375 lh) + 9px × 2 padding
 
@@ -143,22 +144,16 @@ export const GridCell = memo(function GridCell({
     if (opts) {
       return (
         <td className={`p-0${frozenClass}`} style={{ height: CELL_H, borderRight: rightBorder, borderBottom: "1px solid var(--hairline-soft)", ...frozenStyle }}>
-          <select
-            autoFocus
-            defaultValue={value}
-            onChange={e => onCommit(e.target.value, null)}
-            onBlur={e => onCommit(e.target.value, null)}
-            onKeyDown={e => {
-              if (e.key === "Escape") { e.preventDefault(); onCancel(); }
-            }}
-            className="w-full h-full px-3 py-[9px] text-[13px] outline-none"
-            style={{ backgroundColor: "var(--surface)", color: "var(--text-1)", boxShadow: "0 0 0 2px var(--cell-ring) inset" }}
-          >
-            <option value="">—</option>
-            {opts.map(o => (
-              <option key={o} value={o}>{o}</option>
-            ))}
-          </select>
+          {/* The themed dropdown (shared with the Add/Edit card) — opens on entering edit, commits on
+              pick, and leaves edit mode when dismissed (outside click / Escape / Tab). */}
+          <SelectField
+            variant="cell"
+            autoOpen
+            value={value}
+            options={opts}
+            onChange={v => onCommit(v, null)}
+            onRequestClose={onCancel}
+          />
         </td>
       );
     }
@@ -176,7 +171,7 @@ export const GridCell = memo(function GridCell({
             else if (e.key === "Tab") { e.preventDefault(); onCommit(el.value, "right"); }
             else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
           }}
-          className={`w-full h-full px-3 py-[9px] text-[13px] outline-none ${alignRight ? "text-right tabular-nums" : ""}`}
+          className={`w-full h-full px-3 py-[9px] text-base sm:text-[13px] outline-none ${alignRight ? "text-right tabular-nums" : ""}`}
           style={{ backgroundColor: "var(--surface)", color: "var(--text-1)", boxShadow: "0 0 0 2px var(--accent) inset" }}
         />
       </td>
@@ -238,13 +233,13 @@ export const GridCell = memo(function GridCell({
           )}
           {!readOnly && opts && active && <Caret size={10} strokeWidth={2} style={{ color: "var(--text-4)", display: "inline", marginLeft: 2 }} />}
           {indicator === "saving" && (
-            <Loader2 size={10} className="animate-spin inline ml-1" style={{ color: "#f59e0b" }} />
+            <Loader2 size={10} className="animate-spin inline ml-1" style={{ color: "var(--warning)" }} />
           )}
           {indicator === "dirty" && (
-            <span className="w-1.5 h-1.5 rounded-full inline-block ml-1" style={{ backgroundColor: "#f59e0b" }} title="Unsaved changes" />
+            <span className="w-1.5 h-1.5 rounded-full inline-block ml-1" style={{ backgroundColor: "var(--warning)" }} title="Unsaved changes" />
           )}
           {indicator === "error" && (
-            <span className="w-1.5 h-1.5 rounded-full inline-block ml-1" style={{ backgroundColor: "#ef4444" }} title="Save failed" />
+            <span className="w-1.5 h-1.5 rounded-full inline-block ml-1" style={{ backgroundColor: "var(--danger)" }} title="Save failed" />
           )}
         </span>
       </td>

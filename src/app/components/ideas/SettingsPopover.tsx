@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import type { Theme } from "../../hooks/usePreferences";
-import { currentUser } from "../../lib/theme";
 import { ZoomControl } from "./ZoomControl";
 
-// A small settings surface anchored to the profile picture: appearance + zoom.
-// Kept to the two live-preference controls — no gear, no buried menu — so the
-// common path is one click on the avatar (Simplicity, §16).
+// A small settings surface anchored to the sidebar gear: appearance + zoom.
+// Kept to the two live-preference controls — no identity block, no buried menu —
+// so the popover is exactly the settings the gear promises (Simplicity, §16).
 export function SettingsPopover({
   theme,
   onSetTheme,
@@ -68,45 +67,68 @@ export function SettingsPopover({
           boxShadow: "0 12px 40px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.12)",
         }}
       >
-        {/* Identity */}
-        <div className="flex items-center gap-3 px-2.5 py-2.5">
-          <div
-            className="flex items-center justify-center rounded-full text-white font-semibold select-none shrink-0"
-            style={{
-              width: 38, height: 38,
-              background: "linear-gradient(180deg, var(--avatar-top) 0%, var(--avatar-bottom) 100%)",
-              fontSize: 15,
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {currentUser.name.charAt(0)}
-          </div>
-          <div className="min-w-0">
-            <p className="text-[14px] font-semibold truncate" style={{ color: "var(--text-1)" }}>{currentUser.name}</p>
-            <p className="text-[12px] truncate" style={{ color: "var(--text-3)" }}>{currentUser.role}</p>
-          </div>
-        </div>
-
-        <div className="h-px mx-2 mt-1 mb-0.5" style={{ backgroundColor: "var(--hairline-soft)" }} />
-
         {/* Appearance + zoom read as two calm settings rows — label left, control
             right — the same iOS-Settings pattern the detail panel uses. No nested
             container; the popover itself is surface enough (Simplicity, §16). */}
         <div className="flex items-center justify-between gap-4 px-2.5 py-2">
-          <span className="text-[13px]" style={{ color: "var(--text-2)" }}>Appearance</span>
-          <button
-            onClick={() => onSetTheme(theme === "dark" ? "light" : "dark")}
-            aria-label={theme === "dark" ? "Switch to light appearance" : "Switch to dark appearance"}
-            title={theme === "dark" ? "Switch to light" : "Switch to dark"}
-            className="flex items-center justify-center h-[30px] w-[30px] rounded-[8px] shrink-0 transition-all duration-100 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
-            style={{ color: "var(--text-2)" }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--fill-subtle)")}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+          <span className="text-[13px]" style={{ color: "var(--text-2)" }}>Theme</span>
+          {/* Segmented Light / Dark: both options are visible and the active one is
+              marked, so the control shows current state and maps directly to what it
+              changes — no toggle-model to infer (Craft + mapping, §16). Shape and
+              height mirror the zoom pill for a consistent settings row. */}
+          <div
+            role="radiogroup"
+            aria-label="Theme"
+            className="relative flex items-center h-[34px] p-[3px] rounded-full shrink-0"
+            style={{
+              backgroundColor: "var(--control-track)",
+              border: "1px solid var(--hairline)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+            }}
           >
-            {theme === "dark"
-              ? <Sun size={16} strokeWidth={2} />
-              : <Moon size={16} strokeWidth={2} />}
-          </button>
+            {/* The thumb is one continuous element that slides between segments, so the
+                selection reads as a single object moving — critically damped, no bounce,
+                since nothing here carries momentum (§4). */}
+            <div
+              aria-hidden
+              className="appearance-thumb absolute top-[3px] bottom-[3px] rounded-full"
+              style={{
+                left: 3,
+                width: "calc((100% - 6px) / 2)",
+                transform: theme === "dark" ? "translateX(100%)" : "translateX(0)",
+                backgroundColor: "var(--surface-raised)",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+                // Appearance changes run through the whole-screen View Transition (usePreferences),
+                // which would otherwise fold the thumb's move into the root cross-fade. Naming it
+                // lifts it out as its own element so the API morphs its position — a real slide —
+                // during the theme dissolve. The plain CSS transition above stays the fallback for
+                // the no-VT / reduced-motion path (where applyTheme swaps instantly).
+                viewTransitionName: "appearance-thumb",
+              }}
+            />
+            {([
+              { value: "light", label: "Light", icon: Sun },
+              { value: "dark", label: "Dark", icon: Moon },
+            ] as const).map(({ value, label, icon: Icon }) => {
+              const selected = theme === value;
+              return (
+                <button
+                  key={value}
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => onSetTheme(value)}
+                  className="relative z-10 flex items-center justify-center gap-1.5 h-full flex-1 px-2.5 rounded-full text-[12px] font-medium transition-colors duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+                  // Named so the label rides in the top layer ABOVE the sliding thumb during the
+                  // theme View Transition — otherwise the lifted thumb paints over it and the text
+                  // is unreadable mid-slide. The label doesn't move; it just cross-fades its color.
+                  style={{ color: selected ? "var(--text-1)" : "var(--text-3)", viewTransitionName: `appearance-seg-${value}` }}
+                >
+                  <Icon size={14} strokeWidth={2} />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-4 px-2.5 py-2">

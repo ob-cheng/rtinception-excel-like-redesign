@@ -89,7 +89,7 @@ export function IdeaDetailPanel({
   ];
 
   const governance: { label: string; value: string }[] = [
-    { label: "Created by",    value: "Sahil Kapoor" },
+    { label: "Created by",    value: "Tianen" },
     { label: "Created",       value: "Mar 12, 2024" },
     { label: "Last modified", value: "Jun 3, 2025" },
   ];

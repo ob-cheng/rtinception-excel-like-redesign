@@ -1,5 +1,6 @@
-import { useLayoutEffect, useState } from "react";
-import type { CellIndicator, Column, Idea, MoveDir, SortDir, ViewKey } from "../../types";
+import { memo, useCallback, useLayoutEffect, useMemo, useState } from "react";
+import { Check, Minus } from "lucide-react";
+import type { CellIndicator, Column, Idea } from "../../types";
 import { isColReadOnly } from "../../data/columns";
 import { comparatorOptionsFor } from "../../data/ideas";
 import { GridCell } from "./GridCell";
@@ -7,6 +8,7 @@ import { RowMenu } from "./RowMenu";
 import { RowContextMenu } from "./RowContextMenu";
 import type { RowMenuActions } from "./RowMenuItems";
 import { ColumnHeaderCell } from "./ColumnHeaderCell";
+import { useIdeasTable } from "../../context/IdeasTableContext";
 
 // Row-dependent dropdown choices. Comparator's valid values depend on the row's product; every
 // other column just uses its static `col.options`, so this returns undefined and GridCell falls back.
@@ -15,57 +17,75 @@ function cellOptions(col: Column, row: Idea): string[] | undefined {
   return undefined;
 }
 
-type SwapProps = { swapClass: string; swapStyle?: React.CSSProperties };
-
 // Shared stable identity for "no filter on this column", so a memoized ColumnHeaderCell isn't
 // forced to re-render by a fresh `[]` allocated on every parent render.
 const NO_FILTER: string[] = [];
 
-export type IdeasTableProps = {
-  gridRef: { current: HTMLDivElement | null };
-  view: ViewKey;
-  dir: number;
-  cols: Column[];
-  // Resolved frozen set (the user's freeze line applied to this view). Passed in rather than
-  // read from the static per-view defaults so column customization flows through unchanged.
-  frozenKeys: (keyof Idea)[];
-  rows: Idea[];
-  active: { r: number; c: number } | null;
-  isEditing: boolean;
-  seed: string;
-  dirtySet: Set<string>;
-  savingSet: Set<string>;
-  sortCol: string | null;
-  sortDir: SortDir;
-  colFilters: Partial<Record<keyof Idea, string[]>>;
-  openFilter: keyof Idea | null;
-  distinctValues: (key: keyof Idea) => string[];
-  swapProps: (ci: number) => SwapProps;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  onSort: (key: string) => void;
-  onToggleFilterMenu: (key: keyof Idea) => void;
-  onToggleFilterValue: (key: keyof Idea, value: string) => void;
-  onClearFilter: (key: keyof Idea) => void;
-  onSelectCell: (r: number, c: number) => void;
-  onStartEditCell: (r: number, c: number, value: string) => void;
-  onCommitCell: (r: number, c: number, value: string, move: MoveDir) => void;
-  onCancelEdit: () => void;
-  onReadOnlyCell: (r: number, c: number) => void;
-  onEditRow: (row: Idea, ri: number) => void;
-  onViewDetails: (row: Idea) => void;
-  onViewHistory: (row: Idea) => void;
-  onToggleFound: (row: Idea) => void;
-  onDuplicateRow: (row: Idea) => void;
-  onDeleteRow: (row: Idea) => void;
-  // Empty-state wayfinding: whether a filter/search is what's hiding rows, and how to clear it.
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-};
+// Fixed width of the leading checkbox column (px). Always pinned to the left edge; frozen data
+// columns stack after it.
+const SELECT_W = 44;
 
-export function IdeasTable(p: IdeasTableProps) {
+// The selection control — a styled square (not a native checkbox) so it can carry the app's accent
+// fill and its own check/dash glyphs in both themes. `indeterminate` is header-only (some-but-not-all
+// visible rows selected). Kept as one component so the header and row cells can never diverge.
+const SelectCheckbox = memo(function SelectCheckbox({
+  checked,
+  indeterminate = false,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  const on = checked || indeterminate;
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={indeterminate ? "mixed" : checked}
+      aria-label={label}
+      onClick={e => { e.stopPropagation(); onChange(); }}
+      onMouseDown={e => e.stopPropagation()}
+      className="grid place-items-center w-[17px] h-[17px] rounded-[5px] transition-all duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[color:var(--accent-ring)]"
+      style={{
+        backgroundColor: on ? "var(--accent-strong)" : "transparent",
+        border: on ? "1px solid var(--accent-strong)" : "1.5px solid var(--check-border, var(--hairline-strong, var(--hairline)))",
+        color: "var(--on-accent)",
+      }}
+    >
+      {indeterminate
+        ? <Minus size={12} strokeWidth={3} />
+        : checked ? <Check size={12} strokeWidth={3} /> : null}
+    </button>
+  );
+});
+
+// Per-row selection checkbox. Binds the row's uid to the stable grid toggle so its onChange keeps a
+// steady identity across renders — that plus memo lets a row's checkbox skip re-rendering unless its
+// own checked state changes, instead of re-rendering on every table state change via a fresh arrow.
+const RowSelectCheckbox = memo(function RowSelectCheckbox({
+  uid,
+  checked,
+  onToggle,
+}: {
+  uid: string;
+  checked: boolean;
+  onToggle: (uid: string) => void;
+}) {
+  const handleChange = useCallback(() => onToggle(uid), [uid, onToggle]);
+  return <SelectCheckbox checked={checked} onChange={handleChange} label={`Select ${uid}`} />;
+});
+
+export function IdeasTable() {
+  // Everything the table renders now arrives through context (assembled once by App), rather than
+  // as ~40 individually-drilled props. `p` keeps the original accessor shape so the body is
+  // unchanged below.
+  const p = useIdeasTable();
   // Right-click context menu: one instance for the whole table, positioned at the cursor. Opened by
   // onContextMenu on each record row.
-  const [ctxMenu, setCtxMenu] = useState<{ row: Idea; ri: number; x: number; y: number } | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{ row: Idea; ri: number; x: number; y: number; bulk: boolean } | null>(null);
   // The action list is identical to the kebab's — same handlers, same `ri` re-add on Edit — so the
   // two menus can never behave differently.
   const rowActions = (ri: number): RowMenuActions => ({
@@ -83,27 +103,47 @@ export function IdeasTable(p: IdeasTableProps) {
   // scroll underneath. `blockStart` is the distance the table must scroll before the first frozen
   // column reaches the edge and the group starts to pin; `lastFrozenIndex` is the rightmost
   // frozen column, which carries the right-edge shadow.
-  const frozenLeftByIndex = new Map<number, number>();
-  let widthAcc = 0;
-  let blockStart = 0;
-  let blockStarted = false;
-  let lastFrozenIndex = -1;
-  let frozenAcc = 0;
-  // The resolved frozen set for this view (the user's per-column pins, or the view default). An
-  // empty set makes freezing a no-op.
-  const frozen = p.frozenKeys;
-  p.cols.forEach((col, ci) => {
-    if (frozen.includes(col.key)) {
-      if (!blockStarted) { blockStart = widthAcc; blockStarted = true; }
-      frozenLeftByIndex.set(ci, frozenAcc);
-      frozenAcc += col.width ?? 0;
-      lastFrozenIndex = ci;
-    }
-    widthAcc += col.width ?? 0;
-  });
-  // Exact table width = sum of declared column widths + the 64px action column. A definite pixel
-  // width guarantees table-layout:fixed honors each column exactly (see the table style note).
-  const tableWidth = widthAcc + 64;
+  // This geometry depends only on the column set and the frozen set, so memoize it: without this it
+  // (and a fresh Map) was rebuilt on every render — every cursor move and keystroke — even though
+  // nothing here changes between those renders.
+  const { frozenLeftByIndex, tableWidth, blockStart, blockStarted, lastFrozenIndex } = useMemo(() => {
+    const leftByIndex = new Map<number, number>();
+    let widthAcc = 0;
+    let start = 0;
+    let started = false;
+    let lastIndex = -1;
+    // Frozen data columns stack to the RIGHT of the always-pinned checkbox column, so their sticky
+    // left offsets start at its width rather than 0.
+    let frozenAcc = SELECT_W;
+    // The resolved frozen set for this view (the user's per-column pins, or the view default). An
+    // empty set makes freezing a no-op.
+    const frozen = p.frozenKeys;
+    p.cols.forEach((col, ci) => {
+      if (frozen.includes(col.key)) {
+        if (!started) { start = widthAcc; started = true; }
+        leftByIndex.set(ci, frozenAcc);
+        frozenAcc += col.width ?? 0;
+        lastIndex = ci;
+      }
+      widthAcc += col.width ?? 0;
+    });
+    // Exact table width = leading checkbox column + sum of declared column widths + the 64px action
+    // column. A definite pixel width guarantees table-layout:fixed honors each column exactly.
+    return {
+      frozenLeftByIndex: leftByIndex,
+      tableWidth: SELECT_W + widthAcc + 64,
+      blockStart: start,
+      blockStarted: started,
+      lastFrozenIndex: lastIndex,
+    };
+  }, [p.cols, p.frozenKeys]);
+
+  // Read-only status is a function of the view and the column only — not the row — so compute it
+  // once per column here instead of re-deriving it for every cell (rows×cols) in the render below.
+  const readOnlyByCol = useMemo(
+    () => p.cols.map(col => isColReadOnly(p.view, col.key)),
+    [p.cols, p.view],
+  );
 
   // The right-edge shadow (and the "stuck" feel) only turns on once we've scrolled far enough
   // that the block is actually holding position — before that it scrolls like any other column.
@@ -153,6 +193,17 @@ export function IdeasTable(p: IdeasTableProps) {
                 thickest material (§12): a deep blur, and instead of a hard 1px rule its lower
                 edge is a soft scroll shadow that fades content under floating chrome. */}
             <tr className="chrome-blur sticky top-0 z-20" style={{ backgroundColor: "var(--header-surface)", backdropFilter: "blur(22px) saturate(180%)", WebkitBackdropFilter: "blur(22px) saturate(180%)", boxShadow: "0 6px 10px -8px var(--freeze-shadow)" }}>
+              {/* Select-all: pinned at the very left edge, above the frozen data columns. */}
+              <th className="frozen" style={{ left: 0, width: SELECT_W, minWidth: SELECT_W }}>
+                <div className="grid place-items-center h-full">
+                  <SelectCheckbox
+                    checked={p.allSelected}
+                    indeterminate={p.someSelected}
+                    onChange={p.onToggleSelectAll}
+                    label={p.allSelected ? "Deselect all rows" : "Select all rows"}
+                  />
+                </div>
+              </th>
               {p.cols.map((col, ci) => {
                 const sw = p.swapProps(ci);
                 return (
@@ -167,7 +218,7 @@ export function IdeasTable(p: IdeasTableProps) {
                     swapStyle={sw.swapStyle}
                     frozenLeft={frozenLeftByIndex.get(ci)}
                     frozenLast={ci === lastFrozenIndex}
-                    readOnly={isColReadOnly(p.view, col.key)}
+                    readOnly={readOnlyByCol[ci]}
                     onSort={p.onSort}
                     onToggleFilterMenu={p.onToggleFilterMenu}
                     onToggleValue={p.onToggleFilterValue}
@@ -189,12 +240,31 @@ export function IdeasTable(p: IdeasTableProps) {
               // different shade than the rest of the row. --row-bg feeds the row fill
               // (base + hover live in GlobalStyles' .row-tr rules); --freeze-* feed the
               // opaque backgrounds the sticky cells paint over the sliding columns.
-              const rowTone = ri % 2 === 1 ? "var(--zebra)" : "var(--surface)";
-              const freezeVars = {
-                "--row-bg": rowTone,
-                "--freeze-bg": rowTone,
-                "--freeze-active": "var(--cell-active)",
-              } as React.CSSProperties;
+              const isSelected = p.selected.has(row.uid);
+              // A selected row carries one OPAQUE band across both its scrolling and pinned cells, so
+              // the whole row (checkbox + frozen + normal columns) reads as a single selected block —
+              // and, crucially, the pinned cells stay solid so columns sliding under them never show
+              // through (the translucent --cell-active tint used to bleed here). For selected rows we
+              // also point --row-hover at the selected-hover token so the existing hover rules
+              // (tr:hover and tr:hover td.frozen both read --row-hover) tint the selection on hover
+              // rather than washing it away with the neutral hover.
+              const baseTone = ri % 2 === 1 ? "var(--zebra)" : "var(--surface)";
+              const rowTone = isSelected ? "var(--row-selected)" : baseTone;
+              const freezeVars = (isSelected
+                ? {
+                    "--row-bg": "var(--row-selected)",
+                    "--freeze-bg": "var(--row-selected)",
+                    "--row-hover": "var(--row-selected-hover)",
+                    "--freeze-active": "var(--row-selected-hover)",
+                  }
+                : {
+                    "--row-bg": rowTone,
+                    "--freeze-bg": rowTone,
+                    "--freeze-active": "var(--cell-active)",
+                  }) as React.CSSProperties;
+              // Save state is per-row, not per-cell — read it once here rather than in the cols loop.
+              const isSaving = p.savingSet.has(row.uid);
+              const isDirty = p.dirtySet.has(row.uid);
               return (
                 <tr
                   key={row.uid}
@@ -208,12 +278,23 @@ export function IdeasTable(p: IdeasTableProps) {
                   // don't have to scroll right to the kebab. A mid-edit cell commits via its blur.
                   onContextMenu={e => {
                     e.preventDefault();
-                    setCtxMenu({ row, ri, x: e.clientX, y: e.clientY });
+                    // Right-clicking one of several selected rows opens the BULK action list over the
+                    // whole selection; otherwise it's the ordinary single-row menu for this row.
+                    const bulk = p.selected.size > 1 && p.selected.has(row.uid);
+                    setCtxMenu({ row, ri, x: e.clientX, y: e.clientY, bulk });
                   }}
                 >
+                  {/* Row selector — pinned at the left edge, ahead of any frozen data columns. */}
+                  <td className="frozen" style={{ left: 0, width: SELECT_W, minWidth: SELECT_W, borderBottom: "1px solid var(--hairline-soft)" }}>
+                    <div className="grid place-items-center h-full">
+                      <RowSelectCheckbox
+                        uid={row.uid}
+                        checked={isSelected}
+                        onToggle={p.onToggleRowSelected}
+                      />
+                    </div>
+                  </td>
                   {p.cols.map((col, ci) => {
-                    const isSaving = p.savingSet.has(row.uid);
-                    const isDirty = p.dirtySet.has(row.uid);
                     // Only the UID column carries the row's save state — one dot per row, not per cell.
                     const indicator: CellIndicator = ci === 0
                       ? isSaving ? "saving" : isDirty ? "dirty" : null
@@ -229,7 +310,7 @@ export function IdeasTable(p: IdeasTableProps) {
                         swapStyle={sw.swapStyle}
                         frozenLeft={frozenLeftByIndex.get(ci)}
                         frozenLast={ci === lastFrozenIndex}
-                        readOnly={isColReadOnly(p.view, col.key)}
+                        readOnly={readOnlyByCol[ci]}
                         ri={ri}
                         ci={ci}
                         active={p.active?.r === ri && p.active?.c === ci}
@@ -296,6 +377,15 @@ export function IdeasTable(p: IdeasTableProps) {
           x={ctxMenu.x}
           y={ctxMenu.y}
           actions={rowActions(ctxMenu.ri)}
+          bulk={ctxMenu.bulk ? {
+            count: p.selected.size,
+            view: p.view,
+            editableDropdownCols: p.editableDropdownCols,
+            onBulkFund: p.onBulkFund,
+            onBulkSetField: p.onBulkSetField,
+            onBulkDuplicate: p.onBulkDuplicate,
+            onBulkDelete: p.onBulkDelete,
+          } : undefined}
           onClose={() => setCtxMenu(null)}
         />
       )}

@@ -103,6 +103,15 @@ export function ColumnSettingsPopover({
           if (open && !closing) requestClose();
           else { setClosing(false); setOpen(true); }
         }}
+        // Keyboard activation: pointerdown doesn't fire from Enter/Space. Mirror the toggle here so
+        // the popover is operable by keyboard (keyboard use never hits the pointerdown dismiss-scrim).
+        onKeyDown={e => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (open && !closing) requestClose();
+            else { setClosing(false); setOpen(true); }
+          }
+        }}
         aria-haspopup="dialog"
         aria-expanded={open}
         className="flex items-center justify-center gap-1.5 h-[34px] px-4 min-w-[112px] rounded-full text-[13px] font-medium active:scale-[0.97] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"

@@ -109,8 +109,21 @@ export const COMPARATORS_BY_PRODUCT: Record<string, string[]> = Object.fromEntri
 
 // The Comparator dropdown options for a given product: always "None", then that product's own
 // allowed comparators. Unknown/blank product → just "None".
+//
+// The returned array is cached per product and handed back by identity on every call. This matters
+// for render performance: the option list is a GridCell prop, so returning a fresh array each time
+// would break the cell's React.memo and re-render every comparator cell on any table change.
+const NONE_ONLY: string[] = ["None"];
+const comparatorOptionsCache = new Map<string, string[]>();
 export function comparatorOptionsFor(project: string): string[] {
-  return ["None", ...(COMPARATORS_BY_PRODUCT[project] ?? [])];
+  const own = COMPARATORS_BY_PRODUCT[project];
+  if (!own || own.length === 0) return NONE_ONLY;
+  let opts = comparatorOptionsCache.get(project);
+  if (!opts) {
+    opts = ["None", ...own];
+    comparatorOptionsCache.set(project, opts);
+  }
+  return opts;
 }
 
 // Deterministic mock comparator for a row: roughly a third of rows have no comparator arm ("None"),
@@ -152,4 +165,4 @@ export const initialIdeas: Idea[] = seedIdeas.map((r, i) => {
   };
 });
 
-export const emptyDraft: Idea = { status: "Proposed", uid: "", franchise: "", area: "", brandRanking: "", areaPrioritization: "", pathway: "", rtiYear: "", atpProduct: "", project: "", comparator: "", studyName: "", strategicImperatives: "", researchQuestions: "", potentialClaims: "", totalIndirect: "", totalDirect: "", totalCost: "", total2027Indirect: "", total2027Direct: "", total2027Cost: "", primaryEndpoint: "", secondaryEndpoint: "", otherEndpoints: "", studyDesign: "", proposedStatistics: "", sampleSize: "", pos: "", region: "", startDate: "", endDate: "", regionalFeedback: "", comments: "", portfolio: "" };
+export const emptyDraft: Idea = { status: "Proposed", uid: "", franchise: "", area: "", brandRanking: "", areaPrioritization: "", pathway: "", rtiYear: "", atpProduct: "", project: "", comparator: "", studyName: "", proposalType: "", strategicImperatives: "", researchQuestions: "", potentialClaims: "", totalIndirect: "", totalDirect: "", totalCost: "", total2027Indirect: "", total2027Direct: "", total2027Cost: "", primaryEndpoint: "", secondaryEndpoint: "", otherEndpoints: "", studyDesign: "", proposedStatistics: "", sampleSize: "", pos: "", region: "", startDate: "", endDate: "", regionalFeedback: "", comments: "", portfolio: "" };

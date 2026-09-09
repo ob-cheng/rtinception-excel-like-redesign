@@ -10,13 +10,19 @@
   --app-bg: #f5f5f7;          /* window background behind everything */
   --surface: #ffffff;         /* cards, table body, inputs-on-white */
   --surface-2: #fafafa;       /* subtly raised / zebra even rows */
-  --surface-raised: rgba(255,255,255,0.92); /* popovers, floating menus */
+  --surface-raised: rgba(255,255,255,0.96); /* popovers, floating menus */
   --zebra: #fcfcfc;           /* odd data rows */
   --row-hover: #eef2fa;       /* row hover wash */
-  --cell-active: rgba(13,45,107,0.03); /* selected-cell tint */
+  --cell-active: rgba(13,45,107,0.03); /* selected-cell tint (overlay on an opaque cell) */
+  /* Whole-row bulk selection — an OPAQUE fill (not the translucent cell tint), so the pinned
+     frozen cells paint a solid band and the columns sliding underneath never show through. */
+  --row-selected: #dbe6fb;       /* selected data row */
+  --row-selected-hover: #cddcf8; /* selected row, hovered */
+  --check-border: rgba(0,0,0,0.28); /* unchecked selection box outline */
   --hairline: rgba(0,0,0,0.08);        /* structural borders */
   --hairline-soft: rgba(0,0,0,0.05);   /* row / cell separators */
   --fill-subtle: rgba(0,0,0,0.05);     /* search field, ghost chips */
+  --control-track: rgba(120,120,128,0.14); /* inset segmented/zoom pill track */
   --readonly-fill: rgba(60,60,67,0.045); /* read-only column band */
   --header-surface: rgba(249,249,251,0.92); /* translucent grid header */
   --header-solid: #f6f6f8; /* opaque twin of the header tint — for sticky frozen headers */
@@ -29,7 +35,14 @@
   --accent-strong: #0d2d6b;   /* solid primary fills (white text sits on this) */
   --accent-ring: rgba(13,45,107,0.30); /* focus ring */
   --on-accent: #ffffff;       /* text on accent fills */
-  --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04);
+
+  /* Status colors — one source of truth for warning (saving / unsaved) and danger (errors,
+     destructive actions), so status never rides on a scattered one-off hex. */
+  --warning: #f59e0b;         /* saving spinner + unsaved-changes dot */
+  --danger: #dc2626;          /* error text/borders, destructive confirm fill */
+  --danger-text: #dc2626;     /* danger used as foreground (delete affordance) */
+  --on-danger: #ffffff;       /* text on a danger fill */
 
   /* Sidebar — a brand-navy rail in light. In dark it becomes a neutral gray
      panel (see .dark) so a saturated block of navy never sits against near-black. */
@@ -67,6 +80,9 @@
   --freeze-shadow: rgba(0,0,0,0.11);
   --cell-ring: rgba(13,45,107,0.55);
   --surface-modal: #ffffff;
+  /* Positive-confirm accent (inline "Mark as funded" confirmation) — a measured emerald,
+     the same one the success toast uses, so a commit reads in one color language (§ craft). */
+  --confirm-ok: #157f56;
 
   --background: #f4f6f9;
   --foreground: #1a1a2e;
@@ -125,12 +141,18 @@
   --app-bg: #161618;        /* window — deepest layer */
   --surface: #1e1e20;       /* table body, cards, odd rows */
   --surface-2: #2a2a2d;     /* raised: portfolio panel, popover base, locked rows */
-  --surface-raised: rgba(44,44,47,0.72); /* floating glass menus */
+  --surface-raised: rgba(40,40,43,0.95); /* floating glass menus — near-opaque so text stays legible over the grid */
   --zebra: #242426;         /* even data rows — one step up from the surface */
   --row-hover: #2f2f33;     /* neutral hover lift */
-  --cell-active: rgba(91,157,248,0.16);  /* selected-cell tint — accent blue */
+  --cell-active: rgba(91,157,248,0.16);  /* selected-cell tint — accent blue (overlay on an opaque cell) */
+  /* Whole-row bulk selection — an OPAQUE blue-tinted band (not the translucent cell tint), so the
+     pinned frozen cells stay solid and content sliding underneath never bleeds through. */
+  --row-selected: #26374f;       /* selected data row */
+  --row-selected-hover: #2f4463; /* selected row, hovered */
+  --check-border: rgba(255,255,255,0.34); /* unchecked selection box outline */
   --hairline: rgba(255,255,255,0.12);    /* structural borders */
   --hairline-soft: rgba(255,255,255,0.07); /* row / cell separators */
+  --control-track: rgba(255,255,255,0.06); /* inset segmented/zoom pill track */
   --fill-subtle: rgba(255,255,255,0.06); /* search field, ghost chips */
   --readonly-fill: rgba(255,255,255,0.032); /* read-only band */
   --header-surface: rgba(30,30,32,0.80); /* translucent grid header */
@@ -144,7 +166,13 @@
   --accent-strong: #2f6fe0; /* solid primary fills — white text passes on this */
   --accent-ring: rgba(91,157,248,0.45); /* focus ring, brighter to read on dark */
   --on-accent: #ffffff;
-  --shadow-card: 0 4px 16px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+
+  /* Status colors (dark) — brightened so they read over near-black surfaces. */
+  --warning: #fbbf24;
+  --danger: #ef4444;
+  --danger-text: #f87171;
+  --on-danger: #ffffff;
 
   /* Depth cues (dark): edges lift to a light hairline; the pinned-column shadow deepens
      to a real black so it still reads over near-black; the cell ring uses the lifted
@@ -154,6 +182,7 @@
   --freeze-shadow: rgba(0,0,0,0.55);
   --cell-ring: rgba(91,157,248,0.75);
   --surface-modal: #252528;
+  --confirm-ok: #4ccb92; /* lifted so it reads on near-black — matches the dark success toast */
 
   /* Sidebar (dark) — a neutral gray rail, one step above the window, separated by a
      hairline. Brand color appears only on the selected item (accent tint + accent
@@ -312,5 +341,17 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+  }
+}
+
+/* Dropdown (SelectField) popover entrance — scale + fade from the trigger-anchored origin. */
+@keyframes selectPop {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes selectPop {
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 }

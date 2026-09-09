@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, HelpCircle, Home } from "lucide-react";
+import { FileText, HelpCircle, Home, Settings } from "lucide-react";
 import { currentUser } from "../../lib/theme";
 import type { Theme } from "../../hooks/usePreferences";
 import { SettingsPopover } from "./SettingsPopover";
@@ -74,30 +74,38 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* User identity — the profile picture is the entry point to settings
-          (appearance + zoom). The popover anchors here (relative wrapper). */}
+      {/* User identity stays in the sidebar as a calm display element (not a
+          control). The gear below it is the conventional, discoverable entry to
+          appearance + zoom, and anchors the popover (relative wrapper). */}
       <div className="flex-1" />
-      <div className="relative flex flex-col items-center gap-1">
+      <div className="flex flex-col items-center gap-1.5">
+        <div
+          className="flex items-center justify-center rounded-full text-white font-semibold select-none"
+          style={{
+            width: 34, height: 34,
+            background: "var(--sidebar-avatar-bg)",
+            fontSize: 13,
+            letterSpacing: "-0.01em",
+            boxShadow: "0 0 0 2px var(--sidebar-avatar-ring)",
+          }}
+        >
+          {currentUser.name.charAt(0)}
+        </div>
+        <span className="text-[9.5px] font-medium tracking-[0.01em]" style={{ color: "var(--sidebar-fg-hover)" }}>{currentUser.name}</span>
+      </div>
+
+      <div className="relative flex flex-col items-center w-full px-2.5 mt-2">
         <button
           onClick={() => setSettingsOpen(o => !o)}
           aria-haspopup="dialog"
           aria-expanded={settingsOpen}
           aria-label="Settings"
           title="Settings"
-          className="flex items-center justify-center rounded-full text-white font-semibold select-none transition-all duration-150 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 hover:brightness-110"
-          style={{
-            width: 34, height: 34,
-            background: "var(--sidebar-avatar-bg)",
-            fontSize: 13,
-            letterSpacing: "-0.01em",
-            boxShadow: settingsOpen
-              ? "0 0 0 2px var(--sidebar-fg-active)"
-              : "0 0 0 2px var(--sidebar-avatar-ring)",
-          }}
+          className={`side-nav-item flex flex-col items-center gap-1.5 w-full py-3 rounded-[14px] active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${settingsOpen ? "is-active" : ""}`}
         >
-          {currentUser.name.charAt(0)}
+          <Settings size={19} strokeWidth={1.7} />
+          <span className="text-[9.5px] font-medium tracking-[0.02em]">Settings</span>
         </button>
-        <span className="text-[9.5px] font-medium mt-0.5 tracking-[0.01em]" style={{ color: "var(--sidebar-fg-hover)" }}>{currentUser.name}</span>
 
         {settingsOpen && (
           <SettingsPopover

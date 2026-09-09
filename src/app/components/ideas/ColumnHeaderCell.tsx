@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Info, Lock } from "lucide-react";
 import type { Column, Idea, SortDir } from "../../types";
@@ -72,6 +72,21 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
   const onClearFilter = useCallback(() => onClearFilterKey(col.key), [onClearFilterKey, col.key]);
   const isFiltered = selected.length > 0;
   const [noteAnchor, setNoteAnchor] = useState<DOMRect | null>(null);
+  // Filter button anchor — the menu is portaled to <body> with fixed positioning so it escapes the
+  // table's scroll/overflow clipping instead of being cut off at the table box edge.
+  const filterBtnRef = useRef<HTMLButtonElement>(null);
+  const [filterAnchor, setFilterAnchor] = useState<DOMRect | null>(null);
+  useEffect(() => {
+    if (!filterOpen) { setFilterAnchor(null); return; }
+    const update = () => { if (filterBtnRef.current) setFilterAnchor(filterBtnRef.current.getBoundingClientRect()); };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [filterOpen]);
   // Play the pop-out before the parent closes the menu (§7 / parity with the kebab + column popover).
   // requestCloseFilter flips to pop-out; animationend calls the real toggle to unmount it.
   const [filterClosing, setFilterClosing] = useState(false);
@@ -142,7 +157,16 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
         {/* Filter (top) + sort (bottom) icons stacked vertically */}
         <div className="flex flex-col items-center shrink-0 gap-[2px]">
           <button
+            ref={filterBtnRef}
             onPointerDown={() => { if (filterOpen && !filterClosing) requestCloseFilter(); else onToggleFilterMenu(); }}
+            // Keyboard activation: pointerdown never fires from Enter/Space, so open/close the filter
+            // menu here too. Keyboard use doesn't hit the pointerdown dismiss-scrim, so no double-fire.
+            onKeyDown={e => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                if (filterOpen && !filterClosing) requestCloseFilter(); else onToggleFilterMenu();
+              }
+            }}
             aria-haspopup="menu"
             aria-expanded={filterOpen}
             title="Filter column"
@@ -167,11 +191,13 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
 
       {col.note && noteAnchor && <NoteCard text={col.note} anchor={noteAnchor} />}
 
-      {filterOpen && (
+      {filterOpen && filterAnchor && createPortal(
         <>
-          <div className="fixed inset-0 z-30" onPointerDown={requestCloseFilter} />
-          <div role="menu" aria-label={`Filter by ${label}`} onAnimationEnd={() => { if (filterClosing) onToggleFilterMenu(); }} className={`${filterClosing ? "pop-out" : "pop-in"} surface-pop absolute right-0 top-full mt-1.5 z-40 w-56 rounded-[16px] py-1 normal-case tracking-normal font-normal`}
+          <div className="fixed inset-0 z-[9998]" onPointerDown={requestCloseFilter} />
+          <div role="menu" aria-label={`Filter by ${label}`} onAnimationEnd={() => { if (filterClosing) onToggleFilterMenu(); }} className={`${filterClosing ? "pop-out" : "pop-in"} surface-pop fixed z-[9999] w-56 rounded-[16px] py-1 normal-case tracking-normal font-normal`}
             style={{
+              top: filterAnchor.bottom + 6,
+              left: Math.max(8, Math.min(filterAnchor.right - 224, window.innerWidth - 224 - 8)),
               backgroundColor: "var(--surface-raised)",
               backdropFilter: "blur(20px) saturate(180%)",
               border: "1px solid var(--hairline)",
@@ -213,7 +239,8 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
               })}
             </div>
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </th>
   );

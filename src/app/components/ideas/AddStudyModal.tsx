@@ -3,6 +3,8 @@ import { Lock, X } from "lucide-react";
 import type { Column, Idea, ViewKey } from "../../types";
 import { isColReadOnly } from "../../data/columns";
 import { comparatorOptionsFor, emptyDraft } from "../../data/ideas";
+import { useModalA11y } from "../../hooks/useModalA11y";
+import { SelectField } from "./SelectField";
 
 // The record card — one glass modal that does double duty for BOTH creating a new study and
 // editing an existing one, so the two read as the same act (Familiarity: same layout, same rules,
@@ -52,13 +54,20 @@ export function AddStudyModal({
   // Snapshotted at open so title/footer/UID rules survive the exit animation unchanged.
   const [isEdit, setIsEdit] = useState(false);
   const [baseUid, setBaseUid] = useState<string | null>(null);
-  const firstFieldRef = useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>(null);
+  const firstFieldRef = useRef<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Trap Tab inside the card, inert the background, and restore focus to the trigger on close (§A.4).
+  // Keyed to `mounted` so the isolation holds through the exit animation.
+  useModalA11y(mounted, overlayRef, dialogRef);
 
   // On open: seed the draft (blank for create, the record for edit) and snapshot the mode.
   // Play the exit before unmounting on close.
   useEffect(() => {
     if (open) {
       setMounted(true);
+      setConfirmDiscard(false);
       const editing = mode === "edit" && initial != null;
       setIsEdit(editing);
       setBaseUid(editing ? initial!.uid : null);
@@ -90,15 +99,21 @@ export function AddStudyModal({
   // the record being edited, or a blank draft when creating.
   const baseline = isEdit && baseUid != null ? (initial ?? emptyDraft) : emptyDraft;
   const dirty = JSON.stringify(draft) !== JSON.stringify(baseline);
+  // Themed discard confirmation instead of window.confirm — same glass surface and voice as the
+  // rest of the app, with buttons that name the consequence (§W.3).
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   function attemptClose() {
-    if (dirty && !window.confirm("Discard your changes?")) return;
+    if (dirty) { setConfirmDiscard(true); return; }
     onClose();
   }
 
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") attemptClose();
+      if (e.key !== "Escape") return;
+      // While the discard prompt is up, Escape dismisses the prompt (keep editing), not the card.
+      if (confirmDiscard) { e.stopPropagation(); setConfirmDiscard(false); return; }
+      attemptClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -126,7 +141,7 @@ export function AddStudyModal({
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ overscrollBehavior: "contain" }}>
       <div
         onClick={attemptClose}
         className="absolute inset-0 bg-black/25 backdrop-blur-[2px] transition-opacity duration-300"
@@ -134,6 +149,7 @@ export function AddStudyModal({
       />
 
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={isEdit ? "Edit study" : "Add study"}
@@ -208,19 +224,13 @@ export function AddStudyModal({
                       {value ? <span>{value}</span> : <span className="italic">Managed by {owner}</span>}
                     </div>
                   ) : options ? (
-                    <select
+                    <SelectField
                       id={`add-${col.key}`}
-                      ref={assignRef ? (el => { firstFieldRef.current = el; }) : undefined}
                       value={value}
-                      onChange={e => set(col.key, e.target.value)}
-                      className="w-full h-[36px] px-3 rounded-[12px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-ring)] transition-shadow duration-100"
-                      style={{ backgroundColor: "var(--fill-subtle)", color: "var(--text-1)", border: "1px solid var(--hairline)" }}
-                    >
-                      <option value="">—</option>
-                      {options.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      options={options}
+                      onChange={val => set(col.key, val)}
+                      triggerRef={assignRef ? (el => { firstFieldRef.current = el; }) : undefined}
+                    />
                   ) : longText ? (
                     <textarea
                       id={`add-${col.key}`}
@@ -228,7 +238,7 @@ export function AddStudyModal({
                       value={value}
                       onChange={e => set(col.key, e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 rounded-[12px] text-[13px] leading-[1.45] resize-y focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-ring)] transition-shadow duration-100"
+                      className="w-full px-3 py-2 rounded-[12px] text-base sm:text-[13px] leading-[1.45] resize-y focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-ring)] transition-shadow duration-100"
                       style={{ backgroundColor: "var(--fill-subtle)", color: "var(--text-1)", border: "1px solid var(--hairline)" }}
                     />
                   ) : (
@@ -238,17 +248,17 @@ export function AddStudyModal({
                       type="text"
                       value={value}
                       onChange={e => set(col.key, e.target.value)}
-                      className="w-full h-[36px] px-3 rounded-[12px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-ring)] transition-shadow duration-100"
+                      className="w-full h-[36px] px-3 rounded-[12px] text-base sm:text-[13px] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-ring)] transition-shadow duration-100"
                       style={{
                         backgroundColor: "var(--fill-subtle)",
                         color: "var(--text-1)",
-                        border: fieldError ? "1px solid #dc2626" : "1px solid var(--hairline)",
+                        border: fieldError ? "1px solid var(--danger)" : "1px solid var(--hairline)",
                       }}
                     />
                   )}
 
                   {fieldError ? (
-                    <p className="text-[11.5px] mt-1" style={{ color: "#dc2626" }}>
+                    <p className="text-[11.5px] mt-1" style={{ color: "var(--danger-text)" }}>
                       UID {trimmedUid} already exists — choose a unique UID.
                     </p>
                   ) : col.note ? (
@@ -280,6 +290,45 @@ export function AddStudyModal({
             {isEdit ? "Save changes" : "Add study"}
           </button>
         </div>
+
+        {/* Discard confirmation — a calm, plain nested prompt (§W.3/§W.6). Buttons name the
+            consequence so the choice is answerable without re-reading the body. */}
+        {confirmDiscard && (
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-label="Discard changes"
+            className="absolute inset-0 z-10 flex items-center justify-center p-6"
+            style={{ backgroundColor: "color-mix(in srgb, var(--surface-modal) 62%, transparent)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)" }}
+          >
+            <div
+              className="w-full max-w-[360px] rounded-[16px] p-5"
+              style={{ backgroundColor: "var(--surface-raised)", border: "1px solid var(--hairline)", boxShadow: "0 20px 50px -12px rgba(15,23,42,0.4)" }}
+            >
+              <h3 className="text-[15px] font-semibold" style={{ color: "var(--text-1)" }}>Discard changes?</h3>
+              <p className="text-[13px] mt-1.5 leading-[1.45]" style={{ color: "var(--text-3)" }}>
+                Your edits to this record haven&apos;t been saved. They will be lost if you close now.
+              </p>
+              <div className="flex items-center justify-end gap-2.5 mt-5">
+                <button
+                  onClick={() => setConfirmDiscard(false)}
+                  className="h-[34px] px-4 rounded-full text-[13px] font-medium hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.98] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
+                  style={{ color: "var(--text-2)" }}
+                >
+                  Keep editing
+                </button>
+                <button
+                  autoFocus
+                  onClick={() => { setConfirmDiscard(false); onClose(); }}
+                  className="h-[34px] px-4 text-[13px] font-medium rounded-full active:scale-[0.98] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent-ring)]"
+                  style={{ backgroundColor: "var(--danger)", color: "var(--on-danger)" }}
+                >
+                  Discard changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

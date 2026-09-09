@@ -18,6 +18,29 @@ export function GlobalStyles() {
       }
       .pop-out { animation: popOut 0.13s cubic-bezier(0.3, 0, 0.8, 0.15) forwards; transform-origin: top right; pointer-events: none; }
 
+      /* Slim, muted scrollbars for the grid — the browser default draws a chunky opaque thumb that
+         reads as an odd gray band under the floating chrome (e.g. behind the bulk-action bar). This
+         uses the app's own hairline/text tokens so the scrollbar is the same quiet material as the
+         rest of the surface, in both themes. */
+      /* One scrollbar look everywhere — grid, sidebar, panels, modals, popovers, dropdown lists.
+         Applied globally (not per-class) so every scroll area reads as the same quiet material:
+         a slim, muted thumb built from the app's own text token, reachable at rest and deepening
+         slightly on direct hover, over a transparent track. Holds in both themes. */
+      * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text-3) 40%, transparent) transparent; }
+      *::-webkit-scrollbar { width: 10px; height: 10px; }
+      *::-webkit-scrollbar-track { background: transparent; }
+      *::-webkit-scrollbar-thumb {
+        background-color: color-mix(in srgb, var(--text-3) 40%, transparent);
+        border-radius: 999px;
+        border: 3px solid transparent;
+        background-clip: content-box;
+        transition: background-color 0.2s ease;
+      }
+      *::-webkit-scrollbar-thumb:hover {
+        background-color: color-mix(in srgb, var(--text-3) 65%, transparent);
+      }
+      *::-webkit-scrollbar-corner { background: transparent; }
+
       /* View swap: the incoming columns arrive from the side the tab moved toward, so the
          tab strip and the content agree about direction. --enter carries the sign.
          The UID column never gets this class — it's the spine the rows are identified by,
@@ -40,6 +63,10 @@ export function GlobalStyles() {
         from { opacity: 0; transform: translateY(-3px) scale(0.97); }
         to   { opacity: 1; transform: translateY(0) scale(1); }
       }
+
+      /* Segmented Appearance thumb — one object sliding between Light/Dark. Critically
+         damped (no overshoot); nothing here carries momentum (§4). */
+      .appearance-thumb { transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
 
       /* Excel-style frozen columns. Sticky cells become their own paint layer, so the row's
          <tr> background no longer shows through them — each frozen cell paints an opaque
@@ -125,6 +152,19 @@ export function GlobalStyles() {
       html.theme-swapping *::after {
         transition: none !important;
       }
+      /* The Appearance thumb opts out of the root cross-fade (view-transition-name in
+         SettingsPopover) so the API animates it as its own element — a genuine slide
+         between Light/Dark, critically damped to match the CSS fallback (§4). */
+      ::view-transition-group(appearance-thumb),
+      ::view-transition-group(appearance-seg-light),
+      ::view-transition-group(appearance-seg-dark) {
+        animation-duration: 0.32s;
+        animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      /* Labels sit above the thumb (later in DOM → painted on top), so they stay legible
+         while the thumb slides under them — the segmented control animates as one unit. */
+      ::view-transition-group(appearance-seg-light),
+      ::view-transition-group(appearance-seg-dark) { z-index: 1; }
 
       /* §14 Reduced motion — swap material/spring motion for a gentle cross-fade, drop transforms. */
       @media (prefers-reduced-motion: reduce) {
@@ -146,6 +186,8 @@ export function GlobalStyles() {
         @keyframes stepFade { from { opacity: 0; } to { opacity: 1; } }
         .step-fade { animation: stepFade 0.12s ease both; }
         @keyframes tooltip-in { from { opacity: 0; } to { opacity: 1; } }
+        /* Collapse the appearance slide to an instant swap (§14). */
+        .appearance-thumb { transition: none !important; }
         *, *::before, *::after {
           transition-property: opacity, color, background-color, border-color !important;
           transition-duration: 0.12s !important;

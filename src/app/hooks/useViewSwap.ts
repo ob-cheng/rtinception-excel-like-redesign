@@ -1,8 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ViewKey } from "../types";
 import { VIEWS } from "../data/columns";
 
 const SWAP_MS = 140;
+
+type SwapResult = { swapClass: string; swapStyle?: React.CSSProperties };
+// UID (ci === 0) is the spine — it never takes part in the swap — so its result is constant.
+const UID_SWAP: SwapResult = { swapClass: "" };
+const ENTER_SWAP: SwapResult = { swapClass: "col-enter" };
 
 // Owns everything about switching column sets: which view is committed, which one the
 // tab strip is already showing, the direction of travel, and the per-column enter/leave
@@ -44,22 +49,28 @@ export function useViewSwap(initial: ViewKey, onSwapStart: (next: ViewKey) => vo
   const swapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (swapTimer.current) clearTimeout(swapTimer.current); }, []);
 
+  // The leaving state is identical for every participating column, so build it once per render
+  // (it only depends on swapping + dir) and hand the same object to every cell — a fresh object
+  // per cell would break the memo on every GridCell/ColumnHeaderCell during the swap animation.
+  const leaveSwap = useMemo<SwapResult>(
+    () => ({
+      swapClass: "",
+      swapStyle: {
+        transform: `translateX(${-dir * 20}px)`,
+        opacity: 0,
+        // Leaving is brisk and linear-ish; arriving is the slow settle. Asymmetry reads as intent.
+        transition: "transform 0.16s cubic-bezier(0.4, 0, 1, 1), opacity 0.14s ease",
+      },
+    }),
+    [dir],
+  );
+
   // Only the columns right of UID take part in the swap. UID is the spine: same column,
-  // same place, in both views — moving it would imply the rows themselves changed.
-  function swapProps(ci: number): { swapClass: string; swapStyle?: React.CSSProperties } {
-    if (ci === 0) return { swapClass: "" };
-    if (swapping) {
-      return {
-        swapClass: "",
-        swapStyle: {
-          transform: `translateX(${-dir * 20}px)`,
-          opacity: 0,
-          // Leaving is brisk and linear-ish; arriving is the slow settle. Asymmetry reads as intent.
-          transition: "transform 0.16s cubic-bezier(0.4, 0, 1, 1), opacity 0.14s ease",
-        },
-      };
-    }
-    return { swapClass: "col-enter" };
+  // same place, in both views — moving it would imply the rows themselves changed. Returns one of
+  // three shared references so cell props stay identity-stable across renders.
+  function swapProps(ci: number): SwapResult {
+    if (ci === 0) return UID_SWAP;
+    return swapping ? leaveSwap : ENTER_SWAP;
   }
 
   function switchView(next: ViewKey) {

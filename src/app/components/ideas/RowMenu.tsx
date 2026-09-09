@@ -56,6 +56,15 @@ export function RowMenu({
           if (open && !closing) requestClose();
           else { setClosing(false); setOpen(true); }
         }}
+        // Keyboard activation: pointerdown never fires from Enter/Space, so wire the same toggle
+        // here. Keyboard use never triggers the pointerdown dismiss-scrim, so there's no double-fire.
+        onKeyDown={e => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (open && !closing) requestClose();
+            else { setClosing(false); setOpen(true); }
+          }
+        }}
         className="p-1.5 rounded-[8px] active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
         style={{ color: "var(--text-3)" }}
         onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--hairline)")}

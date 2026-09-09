@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Idea } from "../../types";
 import { RowMenuItems, type RowMenuActions } from "./RowMenuItems";
+import { BulkMenuItems, type BulkMenuData } from "./BulkMenuItems";
 
 // The right-click twin of RowMenu: the SAME action list (RowMenuItems), but the glass panel is
 // pinned at the cursor instead of anchored to a kebab. It portals to <body> with position:fixed so
@@ -17,12 +18,16 @@ export function RowContextMenu({
   x,
   y,
   actions,
+  bulk,
   onClose,
 }: {
   row: Idea;
   x: number;
   y: number;
   actions: RowMenuActions;
+  // When set, more than one selected row was right-clicked: show the bulk action list instead of
+  // the single-row one. `actions`/`row` are ignored in that case.
+  bulk?: BulkMenuData;
   onClose: () => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -42,33 +47,50 @@ export function RowContextMenu({
     };
   });
 
-  // Measure-then-flip: use the real rendered size to clamp/flip against both edges.
+  // Measure-then-flip: use the real rendered size to clamp/flip against both edges. Re-runs whenever
+  // the panel's size changes, not just at open — the bulk "Edit field" step swaps the short root list
+  // for a ~300px value list, and without re-placing, that taller panel would spill off (and vanish
+  // below) the bottom edge when opened low on screen. A ResizeObserver catches every content swap.
   useLayoutEffect(() => {
     const el = panelRef.current;
     if (!el) return;
-    const w = el.offsetWidth || MENU_W;
-    const h = el.offsetHeight;
-    const spillRight = x + w > window.innerWidth - MARGIN;
-    const spillBottom = y + h > window.innerHeight - MARGIN;
-    const left = spillRight ? Math.max(MARGIN, x - w) : x;
-    const top = spillBottom ? Math.max(MARGIN, y - h) : y;
-    const origin = `${spillBottom ? "bottom" : "top"} ${spillRight ? "right" : "left"}`;
-    setPos({ left, top, origin });
+    const place = () => {
+      const w = el.offsetWidth || MENU_W;
+      const h = el.offsetHeight;
+      const spillRight = x + w > window.innerWidth - MARGIN;
+      const spillBottom = y + h > window.innerHeight - MARGIN;
+      const left = spillRight ? Math.max(MARGIN, x - w) : x;
+      const top = spillBottom ? Math.max(MARGIN, y - h) : Math.max(MARGIN, y);
+      const origin = `${spillBottom ? "bottom" : "top"} ${spillRight ? "right" : "left"}`;
+      setPos({ left, top, origin });
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [x, y]);
 
   // Dismiss on Escape, viewport change, and scroll. The grid's inner overflow-auto scroll does not
   // bubble, so the scroll listener is registered in the capture phase to catch it too.
   useLayoutEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") requestClose(); };
+    // Scroll dismisses the menu — but NOT when the scroll happens inside the panel itself (the bulk
+    // "Edit field" values list has its own overflow-y-auto). Only outside scrolls (the grid, page)
+    // should close it, so it stays put while the user scrolls a long value list.
+    const onScroll = (e: Event) => {
+      const el = panelRef.current;
+      if (el && e.target instanceof Node && el.contains(e.target)) return;
+      requestClose();
+    };
     window.addEventListener("keydown", onKey);
     window.addEventListener("resize", requestClose);
     window.addEventListener("blur", requestClose);
-    window.addEventListener("scroll", requestClose, true);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", requestClose);
       window.removeEventListener("blur", requestClose);
-      window.removeEventListener("scroll", requestClose, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [requestClose]);
 
@@ -112,7 +134,9 @@ export function RowContextMenu({
           boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)",
         }}
       >
-        <RowMenuItems row={row} actions={actions} onAfterAction={requestClose} />
+        {bulk
+          ? <BulkMenuItems data={bulk} onAfterAction={requestClose} />
+          : <RowMenuItems row={row} actions={actions} onAfterAction={requestClose} />}
       </div>
     </>,
     document.body,

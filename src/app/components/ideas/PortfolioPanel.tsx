@@ -1,31 +1,27 @@
+import { useMemo } from "react";
 import { Layers, ChevronLeft as PanelCollapse } from "lucide-react";
 import type { Idea } from "../../types";
 import { PORTFOLIOS, PORTFOLIO_ABBR } from "../../data/portfolios";
 
-export function PortfolioPanel({
-  rows,
-  active,
+// Hoisted out of PortfolioPanel: defined inside the component body it was a fresh component *type*
+// on every render, forcing React to unmount/remount the whole portfolio list each time the panel
+// re-rendered. As a module-level component it keeps its identity, so the list reconciles normally.
+function PortfolioRow({
+  label,
+  pKey,
+  isActive,
+  count,
   open,
   onSelect,
-  onToggle,
 }: {
-  rows: Idea[];
-  active: string;
+  label: string;
+  pKey: string;
+  isActive: boolean;
+  count: number;
   open: boolean;
   onSelect: (p: string) => void;
-  onToggle: () => void;
 }) {
-  const counts = new Map<string, number>();
-  counts.set("All", rows.length);
-  for (const p of PORTFOLIOS) counts.set(p, 0);
-  for (const row of rows) {
-    if (row.portfolio) counts.set(row.portfolio, (counts.get(row.portfolio) ?? 0) + 1);
-  }
-
-  function PortfolioRow({ label, pKey }: { label: string; pKey: string }) {
-    const isActive = active === pKey;
-    const count = counts.get(pKey) ?? 0;
-    return (
+  return (
       <button
         onClick={() => onSelect(pKey)}
         title={label}
@@ -69,8 +65,33 @@ export function PortfolioPanel({
           </span>
         )}
       </button>
-    );
-  }
+  );
+}
+
+export function PortfolioPanel({
+  rows,
+  active,
+  open,
+  onSelect,
+  onToggle,
+}: {
+  rows: Idea[];
+  active: string;
+  open: boolean;
+  onSelect: (p: string) => void;
+  onToggle: () => void;
+}) {
+  // Counts depend only on rows, so recompute the Map only when rows change rather than on every
+  // panel re-render (open/collapse, active-portfolio change).
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    m.set("All", rows.length);
+    for (const p of PORTFOLIOS) m.set(p, 0);
+    for (const row of rows) {
+      if (row.portfolio) m.set(row.portfolio, (m.get(row.portfolio) ?? 0) + 1);
+    }
+    return m;
+  }, [rows]);
 
   return (
     <div
@@ -117,7 +138,14 @@ export function PortfolioPanel({
           "Portfolio" header icon (px-5 = 20px) — Craft: a single, deliberate left line. */}
       <div className="flex-1 overflow-y-auto" style={{ padding: open ? "2px 8px 14px" : "0 8px 14px" }}>
         {/* All portfolios */}
-        <PortfolioRow label="All portfolios" pKey="All" />
+        <PortfolioRow
+          label="All portfolios"
+          pKey="All"
+          isActive={active === "All"}
+          count={counts.get("All") ?? 0}
+          open={open}
+          onSelect={onSelect}
+        />
 
         {/* Divider */}
         <div className="my-2" style={{ borderTop: "1px solid var(--hairline)" }} />
@@ -125,7 +153,15 @@ export function PortfolioPanel({
         {/* Individual portfolios */}
         <div className="flex flex-col gap-[3px]">
           {PORTFOLIOS.map(p => (
-            <PortfolioRow key={p} label={p} pKey={p} />
+            <PortfolioRow
+              key={p}
+              label={p}
+              pKey={p}
+              isActive={active === p}
+              count={counts.get(p) ?? 0}
+              open={open}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       </div>

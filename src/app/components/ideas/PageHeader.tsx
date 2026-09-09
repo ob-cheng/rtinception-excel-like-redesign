@@ -31,11 +31,12 @@ export function PageHeader({
         <div className="relative">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-3)" }} />
           <input
-            type="text"
+            type="search"
+            aria-label="Search ideas"
             placeholder="Search…"
             value={search}
             onChange={e => onSearchChange(e.target.value)}
-            className="pl-[30px] pr-4 h-[34px] w-52 rounded-full text-[13px] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-ring)] transition-all duration-150"
+            className="pl-[30px] pr-4 h-[34px] w-52 rounded-full text-base sm:text-[13px] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent-ring)] transition-all duration-150"
             style={{
               backgroundColor: "var(--fill-subtle)",
               border: "none",

@@ -13,6 +13,9 @@ export type Idea = {
   project: string;
   comparator: string;
   studyName: string;
+  // What the study is proposed to establish. Optional so existing seed rows fall back to blank;
+  // edited/created records carry an explicit value.
+  proposalType?: string;
   strategicImperatives: string;
   researchQuestions: string;
   potentialClaims: string;

@@ -6,4 +6,4 @@ export const NAVY_DARK = "#0a2458";
 
 // Signed-in user — in a real app this is resolved from the user ID the app reads at startup.
 // Role is derived from that identity, not entered by hand.
-export const currentUser = { id: "sahil.k", name: "Sahil", role: "Researcher" };
+export const currentUser = { id: "tianen.t", name: "Tianen", role: "Researcher" };
