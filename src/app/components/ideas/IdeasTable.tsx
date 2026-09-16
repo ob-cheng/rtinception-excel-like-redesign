@@ -165,9 +165,13 @@ export function IdeasTable() {
   return (
     <div
       ref={p.gridRef}
-      tabIndex={0}
-      onKeyDown={p.onKeyDown}
+      // While the skeleton is showing, the grid is inert: not focusable, no keyboard nav, and
+      // pointer events are off across the whole surface so header sort/filter/select-all can't be
+      // clicked on placeholder data. `aria-busy` announces the loading state to assistive tech.
+      tabIndex={p.loading ? -1 : 0}
+      onKeyDown={p.loading ? undefined : p.onKeyDown}
       onScroll={onScroll}
+      aria-busy={p.loading || undefined}
       className="flex-1 overflow-auto rounded-[16px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] transition-shadow"
       style={{
         backgroundColor: "var(--surface)",
@@ -192,7 +196,7 @@ export function IdeasTable() {
             {/* The header is the largest translucent surface in the grid, so it reads as the
                 thickest material (§12): a deep blur, and instead of a hard 1px rule its lower
                 edge is a soft scroll shadow that fades content under floating chrome. */}
-            <tr className="chrome-blur sticky top-0 z-20" style={{ backgroundColor: "var(--header-surface)", backdropFilter: "blur(22px) saturate(180%)", WebkitBackdropFilter: "blur(22px) saturate(180%)", boxShadow: "0 6px 10px -8px var(--freeze-shadow)" }}>
+            <tr className="chrome-blur sticky top-0 z-20" style={{ backgroundColor: "var(--header-surface)", backdropFilter: "blur(22px) saturate(180%)", WebkitBackdropFilter: "blur(22px) saturate(180%)", boxShadow: "0 6px 10px -8px var(--freeze-shadow)", pointerEvents: p.loading ? "none" : undefined }}>
               {/* Select-all: pinned at the very left edge, above the frozen data columns. */}
               <th className="frozen" style={{ left: 0, width: SELECT_W, minWidth: SELECT_W }}>
                 <div className="grid place-items-center h-full">
@@ -234,7 +238,39 @@ export function IdeasTable() {
             </tr>
           </thead>
           <tbody>
-            {p.rows.map((row, ri) => {
+            {/* First-load skeleton — the real header and column widths stay, but each row is a
+                set of shimmering placeholder bars. This keeps the grid's shape visible during the
+                ~3s data wait so the surface reads as "loading" rather than "empty", and the layout
+                never jumps when real rows replace it. Bar widths and the shimmer's per-row delay
+                are derived from the row/column index so they're stable across renders (no flicker)
+                yet varied enough to look like real, uneven content. */}
+            {p.loading && Array.from({ length: 12 }).map((_, ri) => (
+              <tr key={`sk-${ri}`} style={{ borderBottom: "1px solid var(--hairline-soft)" }}>
+                <td
+                  className="frozen"
+                  style={{ left: 0, width: SELECT_W, minWidth: SELECT_W, height: 54, backgroundColor: "var(--surface)", borderBottom: "1px solid var(--hairline-soft)" }}
+                >
+                  <div className="grid place-items-center h-full">
+                    <div className="skeleton-bar" style={{ width: 15, height: 15, borderRadius: 4, ["--sk-delay" as string]: `${(ri % 6) * 0.09}s` }} />
+                  </div>
+                </td>
+                {p.cols.map((col, ci) => {
+                  // 48–86% of the cell, deterministic per (row, col) so the bars don't reshuffle.
+                  const pct = 48 + ((ri * 7 + ci * 13) % 39);
+                  return (
+                    <td key={col.key} className="px-3" style={{ height: 54, borderBottom: "1px solid var(--hairline-soft)" }}>
+                      <div
+                        className="skeleton-bar"
+                        style={{ width: `${pct}%`, height: 11, ["--sk-delay" as string]: `${((ri + ci) % 6) * 0.09}s` }}
+                      />
+                    </td>
+                  );
+                })}
+                <td className="w-[64px]" style={{ height: 54, borderBottom: "1px solid var(--hairline-soft)" }} />
+                <td aria-hidden style={{ borderBottom: "1px solid var(--hairline-soft)" }} />
+              </tr>
+            ))}
+            {!p.loading && p.rows.map((row, ri) => {
               // One tone drives both the row and its pinned (frozen) cells, so the
               // brand-ranking / TA-priority / pathway columns can never read as a
               // different shade than the rest of the row. --row-bg feeds the row fill
@@ -348,7 +384,7 @@ export function IdeasTable() {
         {/* Empty state — never a blank grid. Tell the user why it's empty and offer the exit
             (Wayfinding + Forgiveness §16): if filters/search are hiding everything, one tap clears
             them; otherwise it's genuinely an empty view. */}
-        {p.rows.length === 0 && (
+        {!p.loading && p.rows.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-3 py-24 px-6 text-center">
             <p className="text-[15px]" style={{ color: "var(--text-2)" }}>
               {p.hasActiveFilters ? "No ideas match your filters" : "No ideas here yet"}

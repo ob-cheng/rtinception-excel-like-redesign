@@ -16,6 +16,10 @@ export type IdeasTableContextValue = {
   // read from the static per-view defaults so column customization flows through unchanged.
   frozenKeys: (keyof Idea)[];
   rows: Idea[];
+  // First-load flag: while true the table paints a skeleton (real header + column widths,
+  // shimmering placeholder bars) instead of rows, so the initial data wait never shows a
+  // blank grid.
+  loading: boolean;
   active: { r: number; c: number } | null;
   isEditing: boolean;
   seed: string;

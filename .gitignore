@@ -1,7 +1,16 @@
-guidelines/
+# Local AI and agent artifacts
+.codegraph/
+!.codegraph/.gitignore
 plans/
-src/imports
-default_shadcn_theme.css
-ATTRIBUTIONS.md
 .claude/
-docs
+.cursor/
+.windsurf/
+.vscode/.copilot/
+/guidelines
+
+# Local development artifacts
+node_modules/
+dist/
+.env
+.env.*
+!.env.example

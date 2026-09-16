@@ -80,6 +80,11 @@
   --freeze-shadow: rgba(0,0,0,0.11);
   --cell-ring: rgba(13,45,107,0.55);
   --surface-modal: #ffffff;
+  /* Skeleton placeholder bars during the first-load table shimmer. `base` is the resting
+     fill; `sheen` is the brighter band that sweeps across it. On light ground the sheen is a
+     more transparent gray so it reads as a highlight passing over the base. */
+  --skeleton-base: rgba(0,0,0,0.075);
+  --skeleton-sheen: rgba(0,0,0,0.02);
   /* Positive-confirm accent (inline "Mark as funded" confirmation) — a measured emerald,
      the same one the success toast uses, so a commit reads in one color language (§ craft). */
   --confirm-ok: #157f56;
@@ -182,6 +187,9 @@
   --freeze-shadow: rgba(0,0,0,0.55);
   --cell-ring: rgba(91,157,248,0.75);
   --surface-modal: #252528;
+  /* Skeleton bars (dark): a light base lifted off near-black, with a brighter sweep. */
+  --skeleton-base: rgba(255,255,255,0.08);
+  --skeleton-sheen: rgba(255,255,255,0.16);
   --confirm-ok: #4ccb92; /* lifted so it reads on near-black — matches the dark success toast */
 
   /* Sidebar (dark) — a neutral gray rail, one step above the window, separated by a
@@ -354,4 +362,38 @@
     from { opacity: 0; }
     to   { opacity: 1; }
   }
+}
+
+/* Skeleton loading bar — a resting base fill with a brighter sheen swept across it while the
+   initial table data "loads". The sweep is a translateX on a ::after overlay (not an animated
+   background-position): transform is composited on the GPU, so a full grid of bars animates
+   without the per-frame repaint/jank that background-position causes on first paint. */
+@keyframes skeletonShimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+.skeleton-bar {
+  position: relative;
+  overflow: hidden;
+  border-radius: 5px;
+  background-color: var(--skeleton-base);
+}
+.skeleton-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-sheen) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  will-change: transform;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  animation-delay: var(--sk-delay, 0s);
+}
+/* Honour reduced-motion: keep the placeholder shape, drop the moving sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bar::after { animation: none; display: none; }
 }

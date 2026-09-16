@@ -115,6 +115,7 @@ export default function App() {
     cols: grid.cols,
     frozenKeys: grid.frozenCols,
     rows: grid.sorted,
+    loading: store.loading,
     active: grid.active,
     isEditing: grid.isEditing,
     seed: grid.seed,

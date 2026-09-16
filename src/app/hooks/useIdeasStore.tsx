@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Trash2, CircleMinus, FilePlus2, Save, Copy, ListOrdered, CircleDollarSign, Pencil,
 } from "lucide-react";
@@ -20,6 +20,17 @@ import { TOAST_MS, ideasLabel, reversibleToast } from "../lib/toast";
 export function useIdeasStore() {
   const [rows, setRows] = useState<Idea[]>(initialIdeas);
   const { dirtySet, savingSet, dirtyRows, markDirty, flushDirty, rowsRef } = useDirtyRows(rows);
+
+  // First-paint loading gate. The records are available synchronously here, but the real
+  // deployment fetches them from the backend and the grid sits empty for ~2–3s while that
+  // resolves. We reproduce that wait with a fixed timer so the table shows its skeleton
+  // (rather than snapping in instantly) and the loading experience matches production. Purely
+  // a UI simulation — no data actually depends on it.
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   // Inline commit onto an existing row. Any real value change is a data mutation, so — like every
   // other mutation — it surfaces a one-tap Undo that restores the prior cell value. A no-op commit
@@ -260,6 +271,7 @@ export function useIdeasStore() {
 
   return {
     rows,
+    loading,
     dirtySet, savingSet, dirtyRows, markDirty, flushDirty, rowsRef,
     commitCell, addStudy, saveStudy, duplicateRow, deleteRow, commitRanking, toggleFound, bulkFund, bulkSetField, bulkDuplicate, bulkDelete,
   };

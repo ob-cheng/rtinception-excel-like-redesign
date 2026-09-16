@@ -37,12 +37,13 @@ export function IdeaHistoryPanel({
     return () => document.removeEventListener("keydown", onKey);
   }, [rowProp, onClose]);
 
+  // Rebuild the (mock) history only when the shown row changes, not on every panel re-render
+  // (slide-in visibility flips, parent renders while the panel is open). Computed before any early
+  // return so the hook order stays stable across renders (Rules of Hooks).
+  const events = useMemo(() => (shownRow ? generateHistory(shownRow) : []), [shownRow]);
+
   if (!shownRow) return null;
   const row = shownRow;
-
-  // Rebuild the (mock) history only when the shown row changes, not on every panel re-render
-  // (slide-in visibility flips, parent renders while the panel is open).
-  const events = useMemo(() => generateHistory(row), [row]);
 
   return (
     <div className="fixed inset-0 z-50 flex">
