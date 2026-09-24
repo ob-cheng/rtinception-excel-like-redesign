@@ -33,12 +33,21 @@ export function PrioritizeModal({
   open,
   rows,
   currentPortfolio,
+  initialPersona,
+  preferredPortfolio,
   onClose,
   onCommit,
 }: {
   open: boolean;
   rows: Idea[];
   currentPortfolio: string;
+  // The user's role from the setup interview (useProfile). When set, the modal skips its
+  // "What's your role?" step and opens straight on scope. Null → ask as before.
+  initialPersona?: RankPersona | null;
+  // The user's saved portfolio from setup. For a Therapeutic Area VP the prioritization scope IS
+  // a portfolio, so we resolve it (preferred → current view) and skip the "Choose a portfolio"
+  // step when a valid one is known. Null / "All" → fall back to the current view, then ask.
+  preferredPortfolio?: string | null;
   onClose: () => void;
   onCommit: (config: RankingConfig, orderedUids: string[]) => void;
 }) {
@@ -56,11 +65,22 @@ export function PrioritizeModal({
   useEffect(() => {
     if (open) {
       setMounted(true);
-      setStep("persona");
-      setPersona(null);
-      setScope(null);
-      setOrder([]);
       setActiveId(null);
+      const startPersona = initialPersona ?? null;
+      setPersona(startPersona);
+      // A VP prioritizes a whole portfolio, so if we can resolve which one (saved preference, then
+      // the current view) we skip the "Choose a portfolio" step and open straight on the reorder.
+      const autoScope = startPersona === "portfolio" ? resolveVpScope() : null;
+      if (autoScope) {
+        setScope(autoScope);
+        setOrder(scopeRows("portfolio", autoScope));
+        setStep("reorder");
+      } else {
+        setScope(null);
+        setOrder([]);
+        // With a role already known from setup, skip straight to scope; otherwise ask the role.
+        setStep(startPersona ? "scope" : "persona");
+      }
     } else {
       // Play the exit, then unmount once it has settled.
       setVisible(false);
@@ -217,9 +237,26 @@ export function PrioritizeModal({
     return rows.filter(inScope).sort((a, b) => compareCells(a[field], b[field], "asc"));
   }
 
+  // The portfolio a VP should prioritize, without asking: their saved preference wins, then the
+  // portfolio the list is currently narrowed to. "All" isn't a single portfolio, and a portfolio
+  // with no records can't be prioritized — both fall through to the scope picker.
+  function resolveVpScope(): string | null {
+    for (const candidate of [preferredPortfolio, currentPortfolio]) {
+      if (candidate && candidate !== "All" && rows.some(r => r.portfolio === candidate)) return candidate;
+    }
+    return null;
+  }
+
   function pickPersona(p: RankPersona) {
     setPersona(p);
-    setStep("scope");
+    const autoScope = p === "portfolio" ? resolveVpScope() : null;
+    if (autoScope) {
+      setScope(autoScope);
+      setOrder(scopeRows("portfolio", autoScope));
+      setStep("reorder");
+    } else {
+      setStep("scope");
+    }
   }
 
   function pickScope(s: string) {

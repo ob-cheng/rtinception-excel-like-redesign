@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Info, Lock } from "lucide-react";
+import { Check, Info, ListFilter, Lock } from "lucide-react";
 import type { Column, Idea, SortDir } from "../../types";
 import { formatHeaderLabel } from "../../lib/format";
 import { SortIcon } from "./SortIcon";
@@ -172,12 +172,7 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
             title="Filter column"
             className={`p-[2px] rounded transition-all duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${isFiltered ? "text-[color:var(--accent)]" : "text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}
           >
-            {/* SF Symbol-style: three horizontal lines decreasing in width */}
-            <svg width="11" height="9" viewBox="0 0 11 9" fill="none" aria-label="Filter">
-              <line x1="1"   y1="1.25" x2="10"  y2="1.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="2.5" y1="4.5"  x2="8.5" y2="4.5"  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="4"   y1="7.75" x2="7"   y2="7.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <ListFilter size={13} strokeWidth={2} aria-label="Filter" />
           </button>
           <button
             onClick={onSort}

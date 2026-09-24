@@ -2,7 +2,9 @@ import { useState } from "react";
 import { FileText, HelpCircle, Home, Settings } from "lucide-react";
 import { currentUser } from "../../lib/theme";
 import type { Theme } from "../../hooks/usePreferences";
+import type { Profile } from "../../hooks/useProfile";
 import { SettingsPopover } from "./SettingsPopover";
+import { ProfilePopover } from "./ProfilePopover";
 
 export type Page = "home" | "ideas" | "help";
 
@@ -27,12 +29,17 @@ export function AppSidebar({
   page,
   onNavigate,
   prefs,
+  profile,
+  onRestartOnboarding,
 }: {
   page: Page;
   onNavigate: (p: Page) => void;
   prefs: SidebarPrefs;
+  profile: Profile;
+  onRestartOnboarding: () => void;
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   return (
     <aside
       className="flex flex-col items-center pt-5 pb-5 shrink-0"
@@ -74,13 +81,18 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* User identity stays in the sidebar as a calm display element (not a
-          control). The gear below it is the conventional, discoverable entry to
-          appearance + zoom, and anchors the popover (relative wrapper). */}
+      {/* User identity: the avatar is now the entry to the profile popover — it shows the setup
+          captured by the interview and offers "Redo setup". The gear below stays the live
+          appearance control. The relative wrapper anchors the popover to the avatar. */}
       <div className="flex-1" />
-      <div className="flex flex-col items-center gap-1.5">
-        <div
-          className="flex items-center justify-center rounded-full text-white font-semibold select-none"
+      <div className="relative flex flex-col items-center gap-1.5">
+        <button
+          onClick={() => setProfileOpen(o => !o)}
+          aria-haspopup="dialog"
+          aria-expanded={profileOpen}
+          aria-label="Your profile"
+          title="Your profile"
+          className="flex items-center justify-center rounded-full text-white font-semibold select-none active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           style={{
             width: 34, height: 34,
             background: "var(--sidebar-avatar-bg)",
@@ -90,8 +102,18 @@ export function AppSidebar({
           }}
         >
           {currentUser.name.charAt(0)}
-        </div>
+        </button>
         <span className="text-[9.5px] font-medium tracking-[0.01em]" style={{ color: "var(--sidebar-fg-hover)" }}>{currentUser.name}</span>
+
+        {profileOpen && (
+          <ProfilePopover
+            profile={profile}
+            theme={prefs.theme}
+            zoom={prefs.zoom}
+            onRedo={onRestartOnboarding}
+            onClose={() => setProfileOpen(false)}
+          />
+        )}
       </div>
 
       <div className="relative flex flex-col items-center w-full px-2.5 mt-2">

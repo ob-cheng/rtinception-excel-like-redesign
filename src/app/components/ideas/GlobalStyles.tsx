@@ -51,6 +51,14 @@ export function GlobalStyles() {
       }
       .col-enter { animation: colEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 
+      /* Column drag: the carried row eases up out of the list (shadow + slight scale) instead of
+         snapping to full elevation the instant it's picked up. No tilt — a clean, level lift. */
+      @keyframes colCardLift {
+        from { transform: scale(1);    box-shadow: 0 2px 8px rgba(0,0,0,0.10); }
+        to   { transform: scale(1.02); box-shadow: 0 16px 34px rgba(0,0,0,0.30), 0 3px 10px rgba(0,0,0,0.16); }
+      }
+      .col-card-lift { animation: colCardLift 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
       /* Prioritize modal step change — the shell resizes; content gently fades/slides in
          so switching persona → scope → reorder reads as one surface changing, not a flash. */
       @keyframes stepFade {
@@ -58,6 +66,31 @@ export function GlobalStyles() {
         to   { opacity: 1; transform: translateY(0); }
       }
       .step-fade { animation: stepFade 0.26s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+      /* Portfolio panel collapse/expand — the panel *width* animates over 0.3s, but its contents
+         used to hard-swap on the very first frame, so labels popped in before the panel had room
+         for them. These give the swapped-in content a short, slightly delayed fade so it arrives
+         *into* the widening panel rather than ahead of it. The expanded label slides in from the
+         left edge it grows out of; the collapsed abbreviation just fades so it reads as the same
+         label condensing, not a different element. */
+      @keyframes pfLabelIn {
+        from { opacity: 0; transform: translateX(-6px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      .pf-label-in { animation: pfLabelIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.05s backwards; }
+      @keyframes pfAbbrIn {
+        from { opacity: 0; transform: scale(0.85); }
+        to   { opacity: 1; transform: scale(1); }
+      }
+      .pf-abbr-in { animation: pfAbbrIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) 0.04s backwards; }
+
+      /* Pin toggle — swap the crossed-out / pinned glyph with a springy quarter-turn + scale so
+         pinning feels like a physical push, not a flat icon substitution. */
+      @keyframes pfPinPop {
+        from { opacity: 0; transform: rotate(-28deg) scale(0.6); }
+        to   { opacity: 1; transform: rotate(0deg) scale(1); }
+      }
+      .pf-pin-pop { animation: pfPinPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
       @keyframes tooltip-in {
         from { opacity: 0; transform: translateY(-3px) scale(0.97); }
@@ -185,6 +218,12 @@ export function GlobalStyles() {
         .col-enter { animation: colEnter 0.14s ease backwards; }
         @keyframes stepFade { from { opacity: 0; } to { opacity: 1; } }
         .step-fade { animation: stepFade 0.12s ease both; }
+        @keyframes pfLabelIn { from { opacity: 0; } to { opacity: 1; } }
+        .pf-label-in { animation: pfLabelIn 0.12s ease backwards; }
+        @keyframes pfAbbrIn { from { opacity: 0; } to { opacity: 1; } }
+        .pf-abbr-in { animation: pfAbbrIn 0.12s ease backwards; }
+        @keyframes pfPinPop { from { opacity: 0; } to { opacity: 1; } }
+        .pf-pin-pop { animation: pfPinPop 0.12s ease; }
         @keyframes tooltip-in { from { opacity: 0; } to { opacity: 1; } }
         /* Collapse the appearance slide to an instant swap (§14). */
         .appearance-thumb { transition: none !important; }

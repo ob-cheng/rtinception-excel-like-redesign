@@ -1,29 +1,15 @@
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import type { SortDir } from "../../types";
 
+// Sort-direction affordance for column headers. Uses lucide glyphs (like the rest of the app):
+// a solid up/down arrow for the active direction, and a dimmed up/down arrow pair for the
+// unsorted resting state.
 export function SortIcon({ dir }: { dir: SortDir }) {
-  const active = "currentColor";
-  const dim = "currentColor";
-
   if (dir === "asc") {
-    return (
-      <svg width="9" height="10" viewBox="0 0 9 10" fill="none" aria-label="Sorted ascending">
-        <path d="M4.5 1.5L4.5 8.5" stroke={active} strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M2 4L4.5 1.5L7 4" stroke={active} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
+    return <ArrowUp size={13} strokeWidth={2} aria-label="Sorted ascending" />;
   }
   if (dir === "desc") {
-    return (
-      <svg width="9" height="10" viewBox="0 0 9 10" fill="none" aria-label="Sorted descending">
-        <path d="M4.5 8.5L4.5 1.5" stroke={active} strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M2 6L4.5 8.5L7 6" stroke={active} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
+    return <ArrowDown size={13} strokeWidth={2} aria-label="Sorted descending" />;
   }
-  return (
-    <svg width="9" height="10" viewBox="0 0 9 10" fill="none" aria-label="Sort" style={{ opacity: 0.35 }}>
-      <path d="M2 3.5L4.5 1L7 3.5" stroke={dim} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M2 6.5L4.5 9L7 6.5" stroke={dim} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <ArrowUpDown size={13} strokeWidth={2} aria-label="Sort" style={{ opacity: 0.35 }} />;
 }

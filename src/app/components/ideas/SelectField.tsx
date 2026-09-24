@@ -16,6 +16,7 @@ export function SelectField({
   triggerRef,
   variant = "field",
   autoOpen = false,
+  placeholder = "Select",
   onRequestClose,
 }: {
   id?: string;
@@ -27,12 +28,17 @@ export function SelectField({
   variant?: "field" | "cell";
   // Open the list and focus the trigger on mount — used when the grid enters edit mode on this cell.
   autoOpen?: boolean;
+  // Muted prompt shown when nothing is selected — never a real value, never a selected row.
+  placeholder?: string;
   // Called when the list closes WITHOUT a selection (outside press, Tab, Escape). The grid uses this
   // to leave edit mode; the modal leaves it undefined so the trigger simply stays put.
   onRequestClose?: () => void;
 }) {
-  // "" is the cleared/placeholder row, shown as "—", always first.
-  const items = ["", ...options];
+  // Empty is genuinely empty — not a "—" default sitting selected at the top. The list is just the
+  // real options; a "Clear" row appears only once there's a value to clear, so an untouched field
+  // never presents a placeholder as if it were a choice already made.
+  const canClear = value !== "";
+  const items = canClear ? ["", ...options] : options;
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [pos, setPos] = useState<{ left: number; top: number; width: number; flip: boolean } | null>(null);
@@ -40,7 +46,7 @@ export function SelectField({
   const listRef = useRef<HTMLUListElement | null>(null);
   const isCell = variant === "cell";
 
-  const label = value === "" ? "—" : value;
+  const label = value === "" ? placeholder : value;
 
   // Position the fixed panel against the trigger; flip up when the list would overflow the viewport.
   function place() {
@@ -236,13 +242,13 @@ export function SelectField({
                 data-idx={idx}
                 onMouseEnter={() => setActive(idx)}
                 onClick={() => commit(idx)}
-                className="mx-1 px-2.5 h-[30px] flex items-center justify-between gap-2 rounded-[9px] text-[13px] cursor-pointer"
+                className="mx-1 px-2.5 h-[30px] flex items-center justify-between gap-2 rounded-[10px] text-[13px] cursor-pointer"
                 style={{
                   color: opt === "" ? "var(--text-3)" : "var(--text-1)",
                   backgroundColor: isActive ? "var(--fill-subtle)" : "transparent",
                 }}
               >
-                <span className="truncate">{opt === "" ? "—" : opt}</span>
+                <span className="truncate">{opt === "" ? "Clear" : opt}</span>
                 {selected && <Check size={14} strokeWidth={2.5} className="shrink-0" style={{ color: "var(--accent)" }} />}
               </li>
             );

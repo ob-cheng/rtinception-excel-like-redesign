@@ -162,6 +162,14 @@ export function AddStudyModal({
 
   const set = (key: keyof Idea, val: string) => setDraft(d => ({ ...d, [key]: val }));
 
+  // Field sizing lives in one place so the partition and the renderer never disagree on what counts
+  // as "long". A column earns a full-width textarea only when it's genuinely long-form prose — not
+  // just because it carries a grid tooltip. Some tooltip-flagged fields hold short values (a study's
+  // name, a one-line imperative) and read better as ordinary inputs sitting in the two-column grid.
+  const colOptions = (c: Column) => (c.key === "comparator" ? comparatorOptionsFor(draft.project) : c.options);
+  const FORCE_SHORT = new Set<keyof Idea>(["studyName", "strategicImperatives"]);
+  const isLong = (c: Column) => c.tooltip === true && !colOptions(c) && !FORCE_SHORT.has(c.key);
+
   // The primary button stays live rather than dimming to a dead 40% — pressing it with an invalid
   // UID doesn't silently fail (Agency §16); it takes the user straight to the field that needs them
   // and names what's missing, instead of leaving them to guess why nothing happened.
@@ -182,8 +190,8 @@ export function AddStudyModal({
     const { primary = false } = opts;
     const readOnly = isColReadOnly(view, col.key);
     const isUid = col.key === "uid";
-    const longText = col.tooltip === true;
-    const options = col.key === "comparator" ? comparatorOptionsFor(draft.project) : col.options;
+    const longText = isLong(col);
+    const options = colOptions(col);
     const value = draft[col.key] ?? "";
     const fieldError = isUid && (uidTaken || uidMissing);
 
@@ -261,10 +269,7 @@ export function AddStudyModal({
   const restCols = columns.filter(c => c.key !== "uid");
   const lockedCols = restCols.filter(c => isColReadOnly(view, c.key));
   const editableCols = restCols.filter(c => !isColReadOnly(view, c.key));
-  // A field is "long" only if it renders as a textarea — i.e. flagged long-text AND not a dropdown.
-  // Dropdowns stay in the two-column grid even when they carry a tooltip (e.g. Comparator).
-  const colOptions = (c: Column) => (c.key === "comparator" ? comparatorOptionsFor(draft.project) : c.options);
-  const isLong = (c: Column) => c.tooltip === true && !colOptions(c);
+  // Long-form fields (see isLong above) stack full-width; everything else flows in the two-column grid.
   const longCols = editableCols.filter(isLong);
   const shortCols = editableCols.filter(c => !isLong(c));
 
@@ -345,7 +350,17 @@ export function AddStudyModal({
                 </h3>
                 {shortCols.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
-                    {shortCols.map(col => renderField(col))}
+                    {shortCols.map((col, i) => {
+                      // An odd number of short fields would leave the last one stranded beside an empty
+                      // cell — the gap you'd otherwise see before Potential Claims. Let that trailing
+                      // field span the full row so the block closes flush instead of trailing whitespace.
+                      const orphan = shortCols.length % 2 === 1 && i === shortCols.length - 1;
+                      return (
+                        <div key={col.key} className={orphan ? "sm:col-span-2" : undefined}>
+                          {renderField(col)}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {longCols.length > 0 && (
@@ -356,9 +371,11 @@ export function AddStudyModal({
               </section>
             )}
 
-            {/* Owned elsewhere — locked fields, shown for context but kept out of the input flow so
-                the user isn't stepping over things they can't change. */}
-            {lockedCols.length > 0 && (
+            {/* Owned elsewhere — locked fields owned by the other view. On a brand-new record there's
+                nothing to show yet and no reason to parade empty read-only fields at someone creating
+                a study, so this block is edit-only: it appears once there's an actual record whose
+                cross-team context is worth surfacing. */}
+            {isEdit && lockedCols.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="text-[11px] font-semibold uppercase tracking-[0.07em]" style={{ color: "var(--text-3)" }}>

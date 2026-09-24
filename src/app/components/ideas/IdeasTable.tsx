@@ -36,7 +36,7 @@ const SelectCheckbox = memo(function SelectCheckbox({
 }: {
   checked: boolean;
   indeterminate?: boolean;
-  onChange: () => void;
+  onChange: (e: React.MouseEvent) => void;
   label: string;
 }) {
   const on = checked || indeterminate;
@@ -46,7 +46,7 @@ const SelectCheckbox = memo(function SelectCheckbox({
       role="checkbox"
       aria-checked={indeterminate ? "mixed" : checked}
       aria-label={label}
-      onClick={e => { e.stopPropagation(); onChange(); }}
+      onClick={e => { e.stopPropagation(); onChange(e); }}
       onMouseDown={e => e.stopPropagation()}
       className="grid place-items-center w-[17px] h-[17px] rounded-[5px] transition-all duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[color:var(--accent-ring)]"
       style={{
@@ -72,9 +72,9 @@ const RowSelectCheckbox = memo(function RowSelectCheckbox({
 }: {
   uid: string;
   checked: boolean;
-  onToggle: (uid: string) => void;
+  onToggle: (uid: string, shiftKey?: boolean) => void;
 }) {
-  const handleChange = useCallback(() => onToggle(uid), [uid, onToggle]);
+  const handleChange = useCallback((e: React.MouseEvent) => onToggle(uid, e.shiftKey), [uid, onToggle]);
   return <SelectCheckbox checked={checked} onChange={handleChange} label={`Select ${uid}`} />;
 });
 

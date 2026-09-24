@@ -5,27 +5,27 @@ type QA = { q: string; a: string };
 type Section = { title: string; items: QA[] };
 
 // Grouped by the task a person is trying to do, most-common first, so the answer
-// they need is where they'd look. Answers are one or two sentences — concise and
-// clear beats exhaustive (Simplicity, §16).
+// they need is where they'd look. Answers are tightened to one or two plain
+// sentences — clear and scannable beats exhaustive (Simplicity, §16).
 const SECTIONS: Section[] = [
   {
     title: "Getting started",
     items: [
       {
         q: "What is the Ideas List?",
-        a: "It's the shared workspace where clinical-trial ideas are captured, prioritized, and tracked from first proposal through funding — one row per idea, across every portfolio.",
+        a: "A shared workspace for clinical-trial ideas — one row per idea, tracked from first proposal through funding across every portfolio.",
       },
       {
-        q: "What do the Franchise, Evidence Function, and Funded tabs show?",
-        a: "All three show the same ideas, just through different columns. Franchise surfaces strategy and ranking, Evidence Function surfaces study design and endpoints, and Funded collects the ideas approved for investment. Switching tabs changes which columns you see — it doesn't hide any records except that funded ideas live on the Funded tab.",
+        q: "What are the Franchise, Evidence Function, and Funded tabs?",
+        a: "Three views of the same ideas. Franchise shows strategy and ranking, Evidence Function shows study design and endpoints, and Funded collects the ideas approved for investment. Switching tabs changes the columns you see, not which records exist.",
       },
       {
         q: "How do I switch portfolios?",
-        a: "Use the portfolio panel on the left. Pick a portfolio to focus the list, or choose “All portfolios” to see everything together, each row showing its live idea count. Collapse the panel with the chevron to give the grid more room.",
+        a: "Use the panel on the left. Pick a portfolio to focus the list, or “All portfolios” to see everything with live idea counts. Collapse the panel with the chevron for more room.",
       },
       {
-        q: "Why does a Portfolio column appear sometimes but not others?",
-        a: "The Portfolio column shows up only when you're viewing “All portfolios,” so you can tell records apart. Inside a single portfolio it would repeat the same value on every row, so it's hidden.",
+        q: "Why does the Portfolio column come and go?",
+        a: "It appears only under “All portfolios,” where you need it to tell records apart. Inside one portfolio every row would repeat the same value, so it's hidden.",
       },
     ],
   },
@@ -34,23 +34,27 @@ const SECTIONS: Section[] = [
     items: [
       {
         q: "How do I edit a cell?",
-        a: "Select a cell with a click, then double-click, press Enter or F2, or just start typing to edit it. While editing, Enter saves and moves down, Tab saves and moves right, and Esc cancels.",
+        a: "Click to select, then double-click, press Enter, or just start typing. While editing: Enter saves and moves down, Tab saves and moves right, Esc cancels.",
       },
       {
-        q: "How do I move around the grid with the keyboard?",
-        a: "Arrow keys move the selected cell, Tab moves right and wraps to the next row, and Delete or Backspace clears a selected cell. Columns with a fixed set of choices open as a dropdown when you edit them.",
+        q: "How do I move around with the keyboard?",
+        a: "Arrow keys move the selection, Tab moves right and wraps to the next row, and Delete or Backspace clears the selected cell. Cells with fixed choices open as a dropdown.",
       },
       {
-        q: "Why does a column show a small padlock and won't let me type?",
-        a: "That column is owned by the other function, so it's read-only from the tab you're on. Ownership runs both ways: some columns are managed by the Evidence Function (and locked in Franchise), and others are managed by Franchise (and locked in Evidence Function). Switch to the owning tab to edit it.",
+        q: "How do I select multiple rows at once?",
+        a: "Click a row's checkbox to select it, then hold Shift and click another checkbox — every row in between is selected too. Use the checkbox in the header to select or clear all visible rows.",
+      },
+      {
+        q: "Why is a column locked with a padlock?",
+        a: "It's owned by the other function, so it's read-only from your tab. Some columns belong to the Evidence Function, others to Franchise. Switch to the owning tab to edit it.",
       },
       {
         q: "Are my changes saved automatically?",
-        a: "Yes. A small amber dot marks a row with unsaved edits; it becomes a spinner while saving and clears when done. Saves happen when you leave the row, after a short pause, when you switch tabs, and when you leave the page. If a save ever fails it retries on your next change.",
+        a: "Yes. An amber dot marks a row with unsaved edits, turns into a spinner while saving, and clears when done. Saves happen as you leave the row, switch tabs, or leave the page — and retry on your next change if one ever fails.",
       },
       {
-        q: "What do the info icons on some column headers mean?",
-        a: "A few columns carry a small info icon with plain-language guidance on what to enter — for example, how to phrase a Study Name. Hover it to read the note.",
+        q: "What are the info icons on some headers?",
+        a: "Guidance on what to enter — for example, how to phrase a Study Name. Hover the icon to read the note.",
       },
     ],
   },
@@ -59,11 +63,11 @@ const SECTIONS: Section[] = [
     items: [
       {
         q: "How do I add a new idea?",
-        a: "Click the “+ Add study” button at the top-right of the table. A card opens with the fields for the tab you're on, so you fill in exactly what that view manages; fields owned by the other function appear locked. Give it a unique ID and save.",
+        a: "Click “+ Add study” at the top-right of the table. A card opens with the fields for your current tab; fields owned by the other function stay locked. Give it a unique ID and save.",
       },
       {
-        q: "Why won't it accept my new idea?",
-        a: "Every idea needs an ID, and it has to be unique — no two records can share one. If the ID is blank or already in use, you'll see a message and the idea won't be added until you change it.",
+        q: "Why won't my new idea save?",
+        a: "Every idea needs an ID, and it must be unique. If it's blank or already in use, you'll see a message and the idea won't be added until you change it.",
       },
     ],
   },
@@ -72,15 +76,15 @@ const SECTIONS: Section[] = [
     items: [
       {
         q: "How do I sort or filter a column?",
-        a: "Click a column header to sort (again to reverse, once more to clear); empty values always sort to the bottom. Use the filter icon in the header to show only the values you pick — the number of active filters shows in the status bar, and a filter only affects the views where its column is visible.",
+        a: "Click a header to sort — again to reverse, once more to clear (empty values sort last). Use the filter icon to show only the values you pick; the active-filter count appears in the status bar.",
       },
       {
-        q: "What does the search box cover?",
-        a: "Search spans the whole record, not just the visible columns, so you can find an idea by a value the current tab happens to hide.",
+        q: "What does search cover?",
+        a: "The whole record, not just visible columns — so you can find an idea by a value the current tab happens to hide.",
       },
       {
-        q: "Can I change which columns I see and their order?",
-        a: "Yes. Open “Columns” in the header to drag columns into a new order, freeze a column so it stays put as you scroll, or hide ones you don't need. Changes apply to the current tab only and are remembered on this device; “Reset” restores that tab's defaults. The ID column is always first.",
+        q: "Can I change which columns I see?",
+        a: "Yes. Open “Columns” to reorder, freeze, or hide columns. Changes apply to the current tab, are saved on this device, and “Reset” restores the defaults. The ID column stays first.",
       },
     ],
   },
@@ -88,24 +92,24 @@ const SECTIONS: Section[] = [
     title: "Prioritizing & funding",
     items: [
       {
-        q: "What does the Prioritize button do?",
-        a: "It opens a guided flow: pick your role — Brand Director (rank one product's studies) or Therapeutic Area VP (rank a whole portfolio) — choose the scope, then drag the records into the order you want. Saving renumbers them 1 through N for that ranking.",
+        q: "What does Prioritize do?",
+        a: "Opens a guided flow: pick your role — Brand Director (rank one product's studies) or Therapeutic Area VP (rank a portfolio) — choose the scope, then drag records into order. Saving renumbers them 1 through N.",
       },
       {
         q: "How do I mark an idea as funded?",
-        a: "Open a row's menu (⋯) and choose “Mark as funded” — it moves to the Funded tab. You can remove it from Funded later to return it to the working pipeline.",
+        a: "In a row's ⋯ menu, choose “Mark as funded” to move it to the Funded tab. You can remove it later to return it to the pipeline.",
       },
       {
         q: "What else is in the row menu?",
-        a: "The ⋯ menu on each row lets you edit the idea, view its details, view its history, mark it funded, duplicate it (as a new record with its own ID), or delete it.",
+        a: "The ⋯ menu lets you edit, view details, view history, mark funded, duplicate (as a new record with its own ID), or delete an idea.",
       },
       {
-        q: "How do I see an idea's full details or history?",
-        a: "From the row menu, “View idea details” opens a panel with the full specification, study design, and financials, and “View idea history” shows a timeline of activity on that idea.",
+        q: "How do I see an idea's details or history?",
+        a: "From the ⋯ menu: “View idea details” opens the full spec, study design, and financials; “View idea history” shows a timeline of activity.",
       },
       {
         q: "How do I export the list?",
-        a: "Use Export in the header to export the current list, reflecting whatever tab, portfolio, filters, and search you have applied.",
+        a: "Use Export in the header. It saves the current list — reflecting your tab, portfolio, filters, and search — as a CSV.",
       },
     ],
   },
@@ -114,7 +118,7 @@ const SECTIONS: Section[] = [
     items: [
       {
         q: "Can I change the theme or zoom?",
-        a: "Open Settings from your profile picture at the bottom of the sidebar. There you can switch between light and dark and zoom the interface between 80% and 150% (the percentage doubles as a reset to 100%). Both preferences are remembered on this device.",
+        a: "Open Settings from your profile picture at the bottom of the sidebar to switch light or dark and zoom from 80% to 150% (tap the percentage to reset to 100%). Both are saved on this device.",
       },
     ],
   },

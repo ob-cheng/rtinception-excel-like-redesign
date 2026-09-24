@@ -40,9 +40,11 @@ type GridDeps = {
 // and the filtered + sorted rows from the store's raw rows, and owns all the "keep the cursor and
 // selection honest" cleanup that a spreadsheet grid needs. It performs no record mutations itself —
 // it resolves a cell to its row/column and delegates the write to the store's commitCell.
-export function useIdeasGrid({ rows, commitCell, dirtyRows, flushDirty, visibleKeys, frozenKeysFor }: GridDeps) {
-  const [portfolio, setPortfolio] = useState<string>("All");
+export function useIdeasGrid({ rows, commitCell, dirtyRows, flushDirty, visibleKeys, frozenKeysFor, initialPortfolio, initialView }: GridDeps) {
+  const [portfolio, setPortfolio] = useState<string>(initialPortfolio ?? "All");
   const [panelOpen, setPanelOpen] = useState(true);
+  // When pinned, the portfolio panel stays expanded and is exempt from the click-away auto-collapse.
+  const [panelPinned, setPanelPinned] = useState(false);
   const [search, setSearch] = useState("");
   // Tables default-sort by TA Priority ascending so the highest-priority work leads every view.
   const [sortCol, setSortCol] = useState<string | null>("areaPrioritization");
@@ -69,7 +71,7 @@ export function useIdeasGrid({ rows, commitCell, dirtyRows, flushDirty, visibleK
   const gridRef = useRef<HTMLDivElement>(null);
 
   const { view, pendingView, dir, tabRefs, tabIndicator, swapProps, switchView } = useViewSwap(
-    "Franchise",
+    initialView ?? "Franchise",
     () => {
       // Persist anything pending before the grid re-keys under a new column set.
       if (dirtyRows.current.size > 0) flushDirty();
@@ -288,11 +290,11 @@ export function useIdeasGrid({ rows, commitCell, dirtyRows, flushDirty, visibleK
       else setActive({ r: clamp(r + 1, 0, totalRows - 1), c: 0 });
     }
     // Franchise-owned columns are read-only in the Evidence tab — intercept any edit intent.
-    else if (isReadOnlyAt(c) && (e.key === "Enter" || e.key === "F2" || e.key === "Delete" || e.key === "Backspace" || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey))) {
+    else if (isReadOnlyAt(c) && (e.key === "Enter" || e.key === "Delete" || e.key === "Backspace" || (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey))) {
       e.preventDefault();
       notifyReadOnly();
     }
-    else if (e.key === "Enter" || e.key === "F2") { e.preventDefault(); startEdit(currentValue(r, c)); }
+    else if (e.key === "Enter") { e.preventDefault(); startEdit(currentValue(r, c)); }
     else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); const t = sorted[r]; if (t) commitCell(t, cols[c], ""); }
     else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { startEdit(e.key); }
   }
@@ -306,7 +308,29 @@ export function useIdeasGrid({ rows, commitCell, dirtyRows, flushDirty, visibleK
   }, [commitCell, cols, totalRows]);
 
   // ── Bulk selection ────────────────────────────────────────────────────────────
-  const toggleRowSelected = useCallback((uid: string) => {
+  // Anchor for shift-click range selection: the uid of the last checkbox toggled without Shift.
+  // Shift-clicking a second checkbox selects every visible row between the anchor and that row.
+  const selectionAnchor = useRef<string | null>(null);
+  const toggleRowSelected = useCallback((uid: string, shiftKey = false) => {
+    const visible = sortedRef.current;
+    const anchor = selectionAnchor.current;
+    // Shift+click with a valid anchor: select the inclusive range in visible order. The range is
+    // added to (never subtracts from) the current selection, matching Excel/Finder behavior.
+    if (shiftKey && anchor && anchor !== uid) {
+      const from = visible.findIndex(r => r.uid === anchor);
+      const to = visible.findIndex(r => r.uid === uid);
+      if (from !== -1 && to !== -1) {
+        const [lo, hi] = from < to ? [from, to] : [to, from];
+        setSelected(prev => {
+          const next = new Set(prev);
+          for (let i = lo; i <= hi; i++) next.add(visible[i].uid);
+          return next;
+        });
+        return;
+      }
+    }
+    // Plain click: toggle the single row and set it as the new anchor.
+    selectionAnchor.current = uid;
     setSelected(prev => {
       const next = new Set(prev);
       if (next.has(uid)) next.delete(uid); else next.add(uid);
@@ -340,7 +364,7 @@ export function useIdeasGrid({ rows, commitCell, dirtyRows, flushDirty, visibleK
     // layout refs + column geometry
     gridRef, cols, baseCols, frozenCols,
     // portfolio + panel + search
-    portfolio, setPortfolio, panelOpen, setPanelOpen, search, setSearch,
+    portfolio, setPortfolio, panelOpen, setPanelOpen, panelPinned, setPanelPinned, search, setSearch,
     // sort + filters
     sortCol, sortDir, handleSort, clearSort, colFilters, setColFilters, openFilter,
     distinctValues, toggleFilterValue, onToggleFilterMenu, onClearFilter,
