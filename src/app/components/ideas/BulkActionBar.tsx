@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, CircleDollarSign, CircleMinus, Copy, Pencil, Trash2, X } from "lucide-react";
 import type { Column, Idea, ViewKey } from "../../types";
+import { handleMenuKeys } from "../../lib/menuKeys";
 
 // Floating bulk-action bar. Appears (materializes, §12) only while rows are selected and floats over
 // the grid, centered near the bottom edge. It hosts the two bulk actions the user asked for:
@@ -90,10 +91,10 @@ export function BulkActionBar({
             title={canEdit ? undefined : "No bulk-editable fields in this view"}
             onClick={() => setStep(s => (s ? null : { kind: "fields" }))}
             data-open={!!step}
-            className="flex items-center gap-2 h-[34px] px-3 rounded-full text-[13px] font-medium transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] enabled:hover:bg-[color:var(--fill-subtle)] data-[open=true]:bg-[color:var(--fill-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 h-[34px] px-3 rounded-full text-[13px] leading-none font-medium whitespace-nowrap transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] enabled:hover:bg-[color:var(--fill-subtle)] data-[open=true]:bg-[color:var(--fill-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ color: "var(--text-1)" }}
           >
-            <Pencil size={15} strokeWidth={2} />
+            <Pencil size={15} strokeWidth={2}  className="shrink-0" />
             Edit field
           </button>
 
@@ -113,10 +114,10 @@ export function BulkActionBar({
         <button
           type="button"
           onClick={onBulkFund}
-          className="flex items-center gap-2 h-[34px] px-3 rounded-full text-[13px] font-medium transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] hover:bg-[color:var(--fill-subtle)]"
+          className="inline-flex items-center justify-center gap-2 h-[34px] px-3 rounded-full text-[13px] leading-none font-medium whitespace-nowrap transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] hover:bg-[color:var(--fill-subtle)]"
           style={{ color: "var(--text-1)" }}
         >
-          {unfund ? <CircleMinus size={15} strokeWidth={2} /> : <CircleDollarSign size={15} strokeWidth={2} />}
+          {unfund ? <CircleMinus size={15} strokeWidth={2}  className="shrink-0" /> : <CircleDollarSign size={15} strokeWidth={2}  className="shrink-0" />}
           {unfund ? "Remove from funded" : "Mark as funded"}
         </button>
 
@@ -124,10 +125,10 @@ export function BulkActionBar({
         <button
           type="button"
           onClick={onBulkDuplicate}
-          className="flex items-center gap-2 h-[34px] px-3 rounded-full text-[13px] font-medium transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] hover:bg-[color:var(--fill-subtle)]"
+          className="inline-flex items-center justify-center gap-2 h-[34px] px-3 rounded-full text-[13px] leading-none font-medium whitespace-nowrap transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] hover:bg-[color:var(--fill-subtle)]"
           style={{ color: "var(--text-1)" }}
         >
-          <Copy size={15} strokeWidth={2} />
+          <Copy size={15} strokeWidth={2}  className="shrink-0" />
           Duplicate
         </button>
 
@@ -135,10 +136,10 @@ export function BulkActionBar({
         <button
           type="button"
           onClick={onBulkDelete}
-          className="flex items-center gap-2 h-[34px] px-3 rounded-full text-[13px] font-medium transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] hover:bg-red-50 dark:hover:bg-red-500/10 active:bg-red-100/70 dark:active:bg-red-500/15"
+          className="inline-flex items-center justify-center gap-2 h-[34px] px-3 rounded-full text-[13px] leading-none font-medium whitespace-nowrap transition-colors duration-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] hover:bg-red-50 dark:hover:bg-red-500/10 active:bg-red-100/70 dark:active:bg-red-500/15"
           style={{ color: "var(--danger-text)" }}
         >
-          <Trash2 size={15} strokeWidth={2} />
+          <Trash2 size={15} strokeWidth={2}  className="shrink-0" />
           Delete
         </button>
         {/* delete uses the danger token for its foreground */}
@@ -153,7 +154,7 @@ export function BulkActionBar({
           className="grid place-items-center w-[34px] h-[34px] rounded-full transition-colors duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] hover:bg-[color:var(--fill-subtle)]"
           style={{ color: "var(--text-3)" }}
         >
-          <X size={16} strokeWidth={2} />
+          <X size={16} strokeWidth={2}  className="shrink-0" />
         </button>
       </div>
     </div>
@@ -184,6 +185,7 @@ function FieldPopover({
       <div className="fixed inset-0 z-40" onMouseDown={onDismiss} />
       <div
         role="menu"
+        onKeyDown={handleMenuKeys}
         className="pop-in surface-pop absolute bottom-full left-0 mb-3 z-50 w-60 rounded-[16px] py-1.5 overflow-hidden"
         style={{
           transformOrigin: "bottom left",
@@ -199,14 +201,14 @@ function FieldPopover({
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 w-full text-left px-2.5 h-[32px] text-[12px] font-medium transition-colors duration-100 rounded-[8px] mx-1 hover:bg-[color:var(--fill-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+            className="flex items-center gap-1.5 w-full text-left px-2.5 h-[32px] text-[12px] leading-none font-medium transition-colors duration-100 rounded-[8px] mx-1 hover:bg-[color:var(--fill-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
             style={{ width: "calc(100% - 8px)", color: "var(--text-2)" }}
           >
-            <ChevronLeft size={14} strokeWidth={2} />
+            <ChevronLeft size={14} strokeWidth={2}  className="shrink-0" />
             {step.col.label}
           </button>
         ) : (
-          <div className="px-3.5 h-[28px] flex items-center text-[11px] font-semibold uppercase" style={{ color: "var(--text-3)", letterSpacing: "0.04em" }}>
+          <div className="px-3.5 h-[28px] flex items-center text-[11px] leading-none font-semibold uppercase" style={{ color: "var(--text-3)", letterSpacing: "0.04em" }}>
             Set field
           </div>
         )}
@@ -221,11 +223,11 @@ function FieldPopover({
               role="menuitem"
               type="button"
               onClick={() => onPickField(col)}
-              className="flex items-center justify-between gap-2 w-full text-left px-3.5 h-[34px] text-[13px] transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] hover:bg-[color:var(--fill-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+              className="flex items-center justify-between gap-2 w-full text-left px-3.5 h-[34px] text-[13px] leading-none transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] hover:bg-[color:var(--fill-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
               style={{ width: "calc(100% - 8px)", color: "var(--text-1)" }}
             >
               {col.label}
-              <ChevronRight size={14} strokeWidth={2} className="opacity-40" />
+              <ChevronRight size={14} strokeWidth={2} className="shrink-0 opacity-40" />
             </button>
           ))}
 
@@ -235,7 +237,7 @@ function FieldPopover({
               role="menuitem"
               type="button"
               onClick={() => onPickValue(step.col.key, opt)}
-              className="flex items-center w-full text-left px-3.5 h-[34px] text-[13px] transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] hover:bg-[color:var(--fill-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+              className="flex items-center w-full text-left px-3.5 h-[34px] text-[13px] leading-none transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] hover:bg-[color:var(--fill-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
               style={{ width: "calc(100% - 8px)", color: "var(--text-1)" }}
             >
               {opt || <span style={{ color: "var(--text-3)" }}>(empty)</span>}

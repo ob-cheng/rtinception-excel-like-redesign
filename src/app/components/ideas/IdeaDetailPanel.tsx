@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PenLine, Sparkles, X } from "lucide-react";
 import type { Idea } from "../../types";
+import { useModalA11y } from "../../hooks/useModalA11y";
 
 export function IdeaDetailPanel({
   row: rowProp,
@@ -11,6 +12,7 @@ export function IdeaDetailPanel({
   onClose: () => void;
   onEdit: (row: Idea) => void;
 }) {
+  const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   // Keep the last row mounted through the slide-OUT so the panel exits along the same path
@@ -31,7 +33,11 @@ export function IdeaDetailPanel({
     return () => clearTimeout(t);
   }, [rowProp]);
 
-  // Escape to dismiss + focus trap. Keyed to `rowProp` so closing (rowProp → null) re-runs this
+  // Trap Tab, inert the background and restore focus to the trigger on close. Keyed to `rowProp`
+  // so the background becomes interactive again the moment close starts, not after the exit slide.
+  useModalA11y(!!rowProp && !!shownRow, overlayRef, panelRef);
+
+  // Escape to dismiss. Keyed to `rowProp` so closing (rowProp → null) re-runs this
   // effect and its cleanup removes the global listener; keying it to the displayed row would strand
   // the listener because the displayed row lingers through the exit animation.
   useEffect(() => {
@@ -40,10 +46,13 @@ export function IdeaDetailPanel({
       if (e.key === "Escape") onClose();
     }
     document.addEventListener("keydown", onKey);
-    // Move focus into panel
-    panelRef.current?.focus();
     return () => document.removeEventListener("keydown", onKey);
   }, [rowProp, onClose]);
+
+  // Move focus into the panel once it has actually rendered (the first open render is still empty
+  // until `shownRow` catches up with `rowProp`).
+  const panelShown = !!rowProp && !!shownRow;
+  useEffect(() => { if (panelShown) panelRef.current?.focus(); }, [panelShown]);
 
   if (!shownRow) return null;
   // The row rendered below is the persisted one (survives the exit); intent lives in `rowProp`.
@@ -95,7 +104,7 @@ export function IdeaDetailPanel({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex">
       {/* Scrim — a right-side inspector, not a blocking task: a light dim (no blur) keeps the grid
           legible behind so the panel reads as flowing alongside the content it describes (§ Depth),
           while still catching a click-away to dismiss. */}
@@ -127,7 +136,7 @@ export function IdeaDetailPanel({
               <div className="flex items-center gap-2.5 mb-3">
                 <span className="font-mono text-[11px] tracking-[0.02em] text-gray-400 dark:text-gray-400">{row.uid}</span>
               </div>
-              <h2 className="text-[26px] leading-[1.15] tracking-[-0.02em] text-gray-900 dark:text-gray-100 truncate">
+              <h2 className="text-[22px] leading-[1.15] tracking-[-0.02em] text-gray-900 dark:text-gray-100 truncate">
                 {row.project || "Untitled idea"}
               </h2>
               <p className="text-[13px] text-gray-400 dark:text-gray-400 mt-1.5">{row.franchise} · {row.area}</p>
@@ -135,9 +144,9 @@ export function IdeaDetailPanel({
             <button
               onClick={onClose}
               aria-label="Close"
-              className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+              className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
             >
-              <X size={15} strokeWidth={2.25} />
+              <X size={15} strokeWidth={2.25} className="shrink-0" />
             </button>
           </div>
         </div>
@@ -151,7 +160,7 @@ export function IdeaDetailPanel({
               <Sparkles size={13} strokeWidth={2} style={{ color: "var(--accent)" }} />
               <p className="text-[11px] font-medium tracking-[0.01em]" style={{ color: "var(--accent)" }}>Potential claims</p>
             </div>
-            <p className="text-[19px] leading-[1.45] tracking-[-0.01em] text-gray-900 dark:text-gray-100">
+            <p className="text-[17px] leading-[1.45] tracking-[-0.01em] text-gray-900 dark:text-gray-100">
               {row.potentialClaims || <span className="text-gray-300 dark:text-gray-500">No claims defined yet.</span>}
             </p>
           </div>
@@ -239,10 +248,10 @@ export function IdeaDetailPanel({
         <div className="shrink-0 px-7 py-4 border-t border-gray-100 dark:border-white/10 bg-white/80 dark:bg-white/[0.03] backdrop-blur">
           <button
             onClick={() => { onEdit(row); onClose(); }}
-            className="flex items-center justify-center gap-2 w-full h-11 rounded-full text-[14px] font-medium active:scale-[0.99] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent-ring)]"
+            className="inline-flex items-center justify-center gap-2 leading-none w-full h-11 rounded-full text-[15px] font-medium active:scale-[0.99] transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent-ring)]"
             style={{ backgroundColor: "var(--accent-strong)", color: "var(--on-accent)" }}
           >
-            <PenLine size={15} strokeWidth={2} />
+            <PenLine size={15} strokeWidth={2} className="shrink-0" />
             Edit idea
           </button>
         </div>

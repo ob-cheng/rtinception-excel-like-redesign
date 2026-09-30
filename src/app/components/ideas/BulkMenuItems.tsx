@@ -38,7 +38,7 @@ export function BulkMenuItems({
 
   // Shared item recipe — identical to RowMenuItems.item so both menus read the same.
   const itemCls =
-    "flex items-center gap-2.5 w-full text-left px-3.5 h-[34px] text-[13px] transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]";
+    "flex items-center gap-2.5 w-full text-left px-3.5 h-[34px] text-[13px] leading-none transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]";
   const neutralHover = "hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10";
 
   // ── Step 2/3: the field / value chooser, in place of the root list. ──
@@ -51,7 +51,7 @@ export function BulkMenuItems({
           className={`${itemCls} ${neutralHover}`}
           style={{ width: "calc(100% - 8px)", color: "var(--text-2)" }}
         >
-          <ChevronLeft size={13} strokeWidth={2} className="text-gray-400" />
+          <ChevronLeft size={13} strokeWidth={2} className="shrink-0 text-gray-400" />
           {isValues ? (step as { col: Column }).col.label : "Set field"}
         </button>
         <div className="border-t border-gray-100 dark:border-white/10 my-1 mx-1" />
@@ -66,7 +66,7 @@ export function BulkMenuItems({
             style={{ width: "calc(100% - 8px)", color: "var(--text-1)" }}
           >
             {col.label}
-            <ChevronRight size={14} strokeWidth={2} className="opacity-40" />
+            <ChevronRight size={14} strokeWidth={2} className="shrink-0 opacity-40" />
           </button>
         ))}
 
@@ -90,7 +90,7 @@ export function BulkMenuItems({
   return (
     <>
       {/* Selection count — the same "N selected" language the bar uses, as a quiet header. */}
-      <div className="px-3.5 h-[26px] flex items-center text-[11px] font-semibold uppercase" style={{ color: "var(--text-3)", letterSpacing: "0.04em" }}>
+      <div className="px-3.5 h-[26px] flex items-center text-[11px] leading-none font-semibold uppercase" style={{ color: "var(--text-3)", letterSpacing: "0.04em" }}>
         {count} selected
       </div>
       <div className="border-t border-gray-100 dark:border-white/10 my-1 mx-1" />
@@ -105,11 +105,11 @@ export function BulkMenuItems({
         className={`${itemCls} justify-between ${neutralHover} disabled:opacity-40 disabled:cursor-not-allowed`}
         style={{ width: "calc(100% - 8px)", color: "var(--text-1)" }}
       >
-        <span className="flex items-center gap-2.5">
-          <Pencil size={13} strokeWidth={2} className="text-gray-400 dark:text-gray-400" />
+        <span className="flex items-center gap-2.5 min-w-0">
+          <Pencil size={13} strokeWidth={2} className="shrink-0 text-gray-400 dark:text-gray-400" />
           Edit field
         </span>
-        {canEdit && <ChevronRight size={14} strokeWidth={2} className="opacity-40" />}
+        {canEdit && <ChevronRight size={14} strokeWidth={2} className="shrink-0 opacity-40" />}
       </button>
 
       <div className="border-t border-gray-100 dark:border-white/10 my-1 mx-1" />
@@ -122,7 +122,7 @@ export function BulkMenuItems({
         className={`${itemCls} ${neutralHover}`}
         style={{ width: "calc(100% - 8px)", color: "var(--text-1)" }}
       >
-        <span className="text-gray-400 dark:text-gray-400">
+        <span className="shrink-0 inline-flex items-center justify-center w-[13px] h-[13px] text-gray-400 dark:text-gray-400">
           {unfund ? <CircleMinus size={13} strokeWidth={2} /> : <CircleDollarSign size={13} strokeWidth={2} />}
         </span>
         {unfund ? "Remove from funded" : "Mark as funded"}
@@ -138,7 +138,7 @@ export function BulkMenuItems({
         className={`${itemCls} ${neutralHover}`}
         style={{ width: "calc(100% - 8px)", color: "var(--text-1)" }}
       >
-        <Copy size={13} strokeWidth={2} className="text-gray-400 dark:text-gray-400" />
+        <Copy size={13} strokeWidth={2} className="shrink-0 text-gray-400 dark:text-gray-400" />
         Duplicate
       </button>
 
@@ -150,7 +150,7 @@ export function BulkMenuItems({
         className={`${itemCls} text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 active:bg-red-100/70`}
         style={{ width: "calc(100% - 8px)" }}
       >
-        <Trash2 size={13} strokeWidth={2} className="text-red-400" />
+        <Trash2 size={13} strokeWidth={2} className="shrink-0 text-red-400" />
         Delete
       </button>
     </>

@@ -155,7 +155,7 @@ export function useIdeasStore() {
       {
         success: true,
         icon: <ListOrdered size={16} strokeWidth={2} />,
-        description: `${orderedUids.length} records renumbered 1–${orderedUids.length}.`,
+        description: `${orderedUids.length} ideas renumbered 1–${orderedUids.length}.`,
         undo: () =>
           setRows(prev => prev.map(r => (prevByUid.has(r.uid) ? { ...r, [field]: prevByUid.get(r.uid)! } : r))),
       },

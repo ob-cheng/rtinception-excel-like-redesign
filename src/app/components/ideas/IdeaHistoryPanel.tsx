@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock, X } from "lucide-react";
 import type { Idea } from "../../types";
 import { generateHistory } from "../../data/history";
+import { useModalA11y } from "../../hooks/useModalA11y";
 
 export function IdeaHistoryPanel({
   row: rowProp,
@@ -10,6 +11,8 @@ export function IdeaHistoryPanel({
   row: Idea | null;
   onClose: () => void;
 }) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   // Keep the last row mounted through the slide-OUT so the panel exits along its entry path (§7),
   // matching the detail panel. `shownRow` outlives `rowProp=null` until the 0.4s transform finishes.
@@ -37,6 +40,12 @@ export function IdeaHistoryPanel({
     return () => document.removeEventListener("keydown", onKey);
   }, [rowProp, onClose]);
 
+  const panelShown = !!rowProp && !!shownRow;
+  useEffect(() => { if (panelShown) panelRef.current?.focus(); }, [panelShown]);
+
+  // Trap Tab, inert the background and restore focus to the trigger on close (matches the detail panel).
+  useModalA11y(!!rowProp && !!shownRow, overlayRef, panelRef);
+
   // Rebuild the (mock) history only when the shown row changes, not on every panel re-render
   // (slide-in visibility flips, parent renders while the panel is open). Computed before any early
   // return so the hook order stays stable across renders (Rules of Hooks).
@@ -46,7 +55,7 @@ export function IdeaHistoryPanel({
   const row = shownRow;
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex">
       {/* Scrim — matches the detail panel: a light dim (no blur) so the grid stays legible behind
           this right-side inspector while still catching a click-away to dismiss (§ Depth). */}
       <div
@@ -57,6 +66,8 @@ export function IdeaHistoryPanel({
 
       {/* Panel — slides from right, matching the detail panel */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={`Activity for ${row.uid}`}
@@ -71,7 +82,7 @@ export function IdeaHistoryPanel({
         {/* Header */}
         <div className="shrink-0 px-7 pt-6 pb-5 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="text-[20px] leading-tight tracking-[-0.02em] text-gray-900 dark:text-gray-100">Activity</h2>
+            <h2 className="text-[22px] leading-tight tracking-[-0.02em] text-gray-900 dark:text-gray-100">Activity</h2>
             <p className="text-[13px] text-gray-400 dark:text-gray-400 mt-1 truncate">
               <span className="font-mono text-[11px] text-gray-400 dark:text-gray-400">{row.uid}</span>
               <span className="mx-1.5 text-gray-200 dark:text-gray-600">·</span>
@@ -81,9 +92,9 @@ export function IdeaHistoryPanel({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+            className="shrink-0 -mr-1 -mt-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
           >
-            <X size={15} strokeWidth={2.25} />
+            <X size={15} strokeWidth={2.25} className="shrink-0" />
           </button>
         </div>
 
@@ -92,7 +103,7 @@ export function IdeaHistoryPanel({
           {events.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400 dark:text-gray-400 pb-10">
               <Clock size={30} strokeWidth={1.2} className="text-gray-300 dark:text-gray-500" />
-              <p className="text-[14px] text-gray-500 dark:text-gray-400">No activity yet</p>
+              <p className="text-[15px] text-gray-500 dark:text-gray-400">No activity yet</p>
               <p className="text-[13px]">Changes will appear here as the idea progresses.</p>
             </div>
           ) : (
@@ -114,8 +125,8 @@ export function IdeaHistoryPanel({
                     {/* Content */}
                     <div className="flex-1 min-w-0 -mt-0.5">
                       <div className="flex items-baseline justify-between gap-3">
-                        <p className="text-[14px] text-gray-900 dark:text-gray-100 leading-snug">{ev.action}</p>
-                        <time className="shrink-0 text-[11.5px] tabular-nums" style={{ color: "var(--text-3)" }}>
+                        <p className="text-[15px] text-gray-900 dark:text-gray-100 leading-snug">{ev.action}</p>
+                        <time className="shrink-0 text-[12px] tabular-nums" style={{ color: "var(--text-3)" }}>
                           {new Date(`${ev.date}T00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </time>
                       </div>

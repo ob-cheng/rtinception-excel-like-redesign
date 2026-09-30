@@ -1,6 +1,6 @@
 import { memo, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown as Caret, Loader2 } from "lucide-react";
+import { AlertCircle, ChevronDown as Caret, Loader2 } from "lucide-react";
 import type { CellIndicator, Column, MoveDir } from "../../types";
 import { SelectField } from "./SelectField";
 
@@ -236,10 +236,10 @@ export const GridCell = memo(function GridCell({
             <Loader2 size={10} className="animate-spin inline ml-1" style={{ color: "var(--warning)" }} />
           )}
           {indicator === "dirty" && (
-            <span className="w-1.5 h-1.5 rounded-full inline-block ml-1" style={{ backgroundColor: "var(--warning)" }} title="Unsaved changes" />
+            <span role="img" aria-label="Unsaved change" className="w-1.5 h-1.5 rounded-full inline-block ml-1" style={{ backgroundColor: "var(--warning)" }} title="Unsaved changes" />
           )}
           {indicator === "error" && (
-            <span className="w-1.5 h-1.5 rounded-full inline-block ml-1" style={{ backgroundColor: "var(--danger)" }} title="Save failed" />
+            <span role="img" aria-label="Couldn't save" title="Save failed" className="inline-flex align-middle ml-1" style={{ color: "var(--danger)" }}><AlertCircle size={10} strokeWidth={2.4} aria-hidden="true" /></span>
           )}
         </span>
       </td>

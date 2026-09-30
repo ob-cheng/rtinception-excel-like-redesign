@@ -79,10 +79,10 @@ export function RowMenuItems({
       <button
         role="menuitem"
         onClick={() => { action(); onAfterAction(); }}
-        className="flex items-center gap-2.5 w-full text-left px-3.5 h-[34px] text-[13px] transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+        className="flex items-center gap-2.5 w-full text-left px-3.5 h-[34px] text-[13px] leading-none transition-colors duration-100 rounded-[8px] mx-1 my-px active:scale-[0.98] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
         style={{ width: "calc(100% - 8px)" }}
       >
-        <span className="text-gray-400 dark:text-gray-400">{icon}</span>
+        <span className="shrink-0 inline-flex items-center justify-center w-[13px] h-[13px] text-gray-400 dark:text-gray-400">{icon}</span>
         {label}
       </button>
     );
@@ -110,15 +110,15 @@ export function RowMenuItems({
         data-armed={isArmed}
         aria-label={isArmed ? `Confirm ${label.toLowerCase()}` : label}
         onClick={() => (isArmed ? commit(action) : arm(id))}
-        className={`flex items-center gap-2.5 w-full text-left px-3.5 h-[34px] text-[13px] rounded-[8px] mx-1 my-px active:scale-[0.98] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] ${isArmed ? "font-semibold text-white" : restHover}`}
+        className={`flex items-center gap-2.5 w-full text-left px-3.5 h-[34px] text-[13px] leading-none rounded-[8px] mx-1 my-px active:scale-[0.98] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)] ${isArmed ? "font-semibold text-white" : restHover}`}
         style={{ width: "calc(100% - 8px)", backgroundColor: isArmed ? TONE[tone] : undefined }}
       >
         {/* Armed: the icon flips to a check and the label becomes an explicit prompt, so the
             second, deliberate click reads unmistakably as a confirmation — not relying on colour
             alone (accessibility) and never a bare re-label of the same button. */}
-        <span className={isArmed ? "text-white" : restIcon}>{isArmed ? <Check size={13} strokeWidth={2.5} /> : icon}</span>
-        <span className={isArmed ? "flex-1" : `flex-1 ${restText}`}>{isArmed ? "Confirm" : label}</span>
-        {isArmed && <span className="text-[11px] font-medium text-white/80">Click again</span>}
+        <span className={`shrink-0 inline-flex items-center justify-center w-[13px] h-[13px] ${isArmed ? "text-white" : restIcon}`}>{isArmed ? <Check size={13} strokeWidth={2.5} /> : icon}</span>
+        <span className={isArmed ? "flex-1 min-w-0 truncate" : `flex-1 min-w-0 truncate ${restText}`}>{isArmed ? "Confirm" : label}</span>
+        {isArmed && <span className="shrink-0 text-[11px] leading-none font-medium text-white/80">Click again</span>}
       </button>
     );
   }

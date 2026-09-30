@@ -36,7 +36,7 @@ const SelectCheckbox = memo(function SelectCheckbox({
 }: {
   checked: boolean;
   indeterminate?: boolean;
-  onChange: () => void;
+  onChange: (e: React.MouseEvent) => void;
   label: string;
 }) {
   const on = checked || indeterminate;
@@ -46,9 +46,9 @@ const SelectCheckbox = memo(function SelectCheckbox({
       role="checkbox"
       aria-checked={indeterminate ? "mixed" : checked}
       aria-label={label}
-      onClick={e => { e.stopPropagation(); onChange(); }}
+      onClick={e => { e.stopPropagation(); onChange(e); }}
       onMouseDown={e => e.stopPropagation()}
-      className="grid place-items-center w-[17px] h-[17px] rounded-[5px] transition-all duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[color:var(--accent-ring)]"
+      className="relative after:absolute after:content-[''] after:-inset-1 [@media(pointer:coarse)]:after:-inset-[14px] grid place-items-center w-[17px] h-[17px] rounded-[5px] transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[color:var(--accent-ring)]"
       style={{
         backgroundColor: on ? "var(--accent-strong)" : "transparent",
         border: on ? "1px solid var(--accent-strong)" : "1.5px solid var(--check-border, var(--hairline-strong, var(--hairline)))",
@@ -56,8 +56,8 @@ const SelectCheckbox = memo(function SelectCheckbox({
       }}
     >
       {indeterminate
-        ? <Minus size={12} strokeWidth={3} />
-        : checked ? <Check size={12} strokeWidth={3} /> : null}
+        ? <Minus size={12} strokeWidth={3} className="shrink-0 block" aria-hidden="true" />
+        : checked ? <Check size={12} strokeWidth={3} className="shrink-0 block" aria-hidden="true" /> : null}
     </button>
   );
 });
@@ -72,9 +72,9 @@ const RowSelectCheckbox = memo(function RowSelectCheckbox({
 }: {
   uid: string;
   checked: boolean;
-  onToggle: (uid: string) => void;
+  onToggle: (uid: string, shiftKey?: boolean) => void;
 }) {
-  const handleChange = useCallback(() => onToggle(uid), [uid, onToggle]);
+  const handleChange = useCallback((e: React.MouseEvent) => onToggle(uid, e.shiftKey), [uid, onToggle]);
   return <SelectCheckbox checked={checked} onChange={handleChange} label={`Select ${uid}`} />;
 });
 
@@ -162,6 +162,29 @@ export function IdeasTable() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.cols, p.frozenKeys, blockStart, blockStarted, p.view]);
 
+  // Keyboard twin of right-click (Shift+F10 / the Menu key): open the row actions at the active cell.
+  function onGridKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const wantsMenu = e.key === "ContextMenu" || (e.shiftKey && e.key === "F10");
+    if (wantsMenu && !p.isEditing && p.active) {
+      const row = p.rows[p.active.r];
+      const cell = e.currentTarget.querySelector<HTMLElement>('td[data-active="true"]');
+      if (row && cell) {
+        e.preventDefault();
+        const rect = cell.getBoundingClientRect();
+        const bulk = p.selected.size > 1 && p.selected.has(row.uid);
+        setCtxMenu({ row, ri: p.active.r, x: rect.left + 8, y: rect.bottom, bulk });
+        return;
+      }
+    }
+    p.onKeyDown(e);
+  }
+
+  const activeRow = p.active ? p.rows[p.active.r] : undefined;
+  const activeCol = p.active ? p.cols[p.active.c] : undefined;
+  const activeAnnouncement = !p.isEditing && activeRow && activeCol
+    ? `${activeCol.label}, row ${p.active!.r + 1} of ${p.rows.length}: ${String(activeRow[activeCol.key] ?? "") || "empty"}`
+    : "";
+
   return (
     <div
       ref={p.gridRef}
@@ -169,9 +192,10 @@ export function IdeasTable() {
       // pointer events are off across the whole surface so header sort/filter/select-all can't be
       // clicked on placeholder data. `aria-busy` announces the loading state to assistive tech.
       tabIndex={p.loading ? -1 : 0}
-      onKeyDown={p.loading ? undefined : p.onKeyDown}
+      onKeyDown={p.loading ? undefined : onGridKeyDown}
       onScroll={onScroll}
       aria-busy={p.loading || undefined}
+      aria-label="Ideas table. Use arrow keys to move between cells, Enter to edit, Shift+F10 for row actions."
       className="flex-1 overflow-auto rounded-[16px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] transition-shadow"
       style={{
         backgroundColor: "var(--surface)",
@@ -179,6 +203,10 @@ export function IdeasTable() {
         boxShadow: "var(--shadow-card)",
       }}
     >
+      {/* Screen readers can't see the visual cell highlight, so announce the active cell as it moves. */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {activeAnnouncement}
+      </div>
       {/* Re-keying on the view restarts the enter animation; --enter carries its direction. */}
       <div key={p.view} style={{ "--enter": `${p.dir * 28}px` } as React.CSSProperties}>
         {/* border-collapse must be `separate`: sticky (frozen) cells don't paint their own
@@ -391,13 +419,13 @@ export function IdeasTable() {
             </p>
             <p className="text-[13px] max-w-[320px]" style={{ color: "var(--text-3)" }}>
               {p.hasActiveFilters
-                ? "Try broadening or clearing the active filters and search to see more records."
-                : "Records added to this view will appear here."}
+                ? "Try broadening or clearing the active filters and search to see more ideas."
+                : "Ideas added to this view will appear here."}
             </p>
             {p.hasActiveFilters && (
               <button
                 onClick={p.onClearFilters}
-                className="mt-1 h-[34px] px-5 rounded-full text-[13px] font-medium active:scale-[0.98] transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent-ring)]"
+                className="mt-1 inline-flex items-center justify-center h-[34px] px-5 rounded-full text-[13px] leading-none font-medium active:scale-[0.98] transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent-ring)]"
                 style={{ backgroundColor: "var(--accent-strong)", color: "var(--on-accent)" }}
               >
                 Clear filters

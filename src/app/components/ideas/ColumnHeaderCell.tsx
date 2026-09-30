@@ -1,13 +1,14 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Info, Lock } from "lucide-react";
+import { Check, Info, ListFilter, Lock } from "lucide-react";
 import type { Column, Idea, SortDir } from "../../types";
 import { formatHeaderLabel } from "../../lib/format";
 import { SortIcon } from "./SortIcon";
+import { handleMenuKeys } from "../../lib/menuKeys";
 
 // Plain-language column guidance (Column.note), shown as a glass card anchored to the header info
 // icon. Mirrors the cell TooltipCard styling so notes and value tooltips read as one family.
-function NoteCard({ text, anchor }: { text: string; anchor: DOMRect }) {
+export function NoteCard({ text, anchor }: { text: string; anchor: DOMRect }) {
   const cardW = 260;
   const gap = 6;
   let top = anchor.bottom + gap;
@@ -104,7 +105,8 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
 
   return (
     <th
-      className={`${swapClass} text-left px-3 py-[4px] text-[10.5px] font-medium tracking-[0.01em] select-none relative${frozenLast ? "" : " border-r"}${frozenClass}`}
+      aria-sort={sortDir === "asc" ? "ascending" : sortDir === "desc" ? "descending" : "none"}
+      className={`${swapClass} text-left px-3 py-[4px] text-[11px] font-medium tracking-[0.01em] select-none relative${frozenLast ? "" : " border-r"}${frozenClass}`}
       style={{
         ...swapStyle,
         color: "var(--text-3)",
@@ -134,14 +136,14 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
           <button
             type="button"
             aria-label={`About ${col.label}`}
-            className="shrink-0 p-[1px] rounded-full text-gray-400 dark:text-gray-400 hover:text-[color:var(--accent)] transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
+            className="shrink-0 inline-flex items-center justify-center leading-none p-[1px] rounded-full text-gray-400 dark:text-gray-400 hover:text-[color:var(--accent)] transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
             onMouseEnter={e => setNoteAnchor(e.currentTarget.getBoundingClientRect())}
             onMouseLeave={() => setNoteAnchor(null)}
             onFocus={e => setNoteAnchor(e.currentTarget.getBoundingClientRect())}
             onBlur={() => setNoteAnchor(null)}
             onClick={e => e.stopPropagation()}
           >
-            <Info size={11} strokeWidth={2.2} />
+            <Info size={11} strokeWidth={2.2} className="shrink-0 block" aria-hidden="true" />
           </button>
         )}
         {/* Read-only marker: this column is Franchise-owned and can't be edited from this tab. */}
@@ -170,21 +172,18 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
             aria-haspopup="menu"
             aria-expanded={filterOpen}
             title="Filter column"
-            className={`p-[2px] rounded transition-all duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${isFiltered ? "text-[color:var(--accent)]" : "text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}
+            aria-label={`Filter ${label}`}
+            className={`relative after:absolute after:content-[''] after:-inset-x-1 after:-top-1 after:-bottom-px [@media(pointer:coarse)]:after:-inset-x-[7px] inline-flex items-center justify-center leading-none p-[2px] rounded transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${isFiltered ? "text-[color:var(--accent)]" : "text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}
           >
-            {/* SF Symbol-style: three horizontal lines decreasing in width */}
-            <svg width="11" height="9" viewBox="0 0 11 9" fill="none" aria-label="Filter">
-              <line x1="1"   y1="1.25" x2="10"  y2="1.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="2.5" y1="4.5"  x2="8.5" y2="4.5"  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="4"   y1="7.75" x2="7"   y2="7.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <ListFilter size={13} strokeWidth={2} className="shrink-0 block" aria-hidden="true" />
           </button>
           <button
             onClick={onSort}
             title="Sort"
-            className={`p-[2px] rounded transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${sortDir ? "text-[color:var(--accent)]" : "text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}
+            aria-label={`Sort by ${label}`}
+            className={`relative after:absolute after:content-[''] after:-inset-x-1 after:-top-px after:-bottom-1 [@media(pointer:coarse)]:after:-inset-x-[7px] inline-flex items-center justify-center leading-none p-[2px] rounded transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${sortDir ? "text-[color:var(--accent)]" : "text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}
           >
-            <SortIcon dir={sortDir} />
+            <span aria-hidden="true" className="inline-flex leading-none"><SortIcon dir={sortDir} /></span>
           </button>
         </div>
       </div>
@@ -194,7 +193,7 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
       {filterOpen && filterAnchor && createPortal(
         <>
           <div className="fixed inset-0 z-[9998]" onPointerDown={requestCloseFilter} />
-          <div role="menu" aria-label={`Filter by ${label}`} onAnimationEnd={() => { if (filterClosing) onToggleFilterMenu(); }} className={`${filterClosing ? "pop-out" : "pop-in"} surface-pop fixed z-[9999] w-56 rounded-[16px] py-1 normal-case tracking-normal font-normal`}
+          <div role="menu" onKeyDown={handleMenuKeys} aria-label={`Filter by ${label}`} onAnimationEnd={() => { if (filterClosing) onToggleFilterMenu(); }} className={`${filterClosing ? "pop-out" : "pop-in"} surface-pop fixed z-[9999] w-56 rounded-[16px] py-1 normal-case tracking-normal font-normal`}
             style={{
               top: filterAnchor.bottom + 6,
               left: Math.max(8, Math.min(filterAnchor.right - 224, window.innerWidth - 224 - 8)),
@@ -205,11 +204,11 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
             }}
           >
             <div className="flex items-center justify-between px-3.5 py-2 border-b border-gray-100 dark:border-white/10">
-              <span className="text-[11.5px] font-semibold text-gray-600 dark:text-gray-300">Filter by {label}</span>
+              <span className="text-[12px] font-semibold text-gray-600 dark:text-gray-300">Filter by {label}</span>
               {isFiltered && (
                 <button
                   onClick={onClearFilter}
-                  className="text-[11.5px] font-medium text-[color:var(--accent)] hover:opacity-70 transition-opacity duration-100 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
+                  className="inline-flex items-center leading-none text-[12px] font-medium text-[color:var(--accent)] hover:opacity-70 transition-opacity duration-100 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
                 >
                   Clear
                 </button>
@@ -227,11 +226,11 @@ export const ColumnHeaderCell = memo(function ColumnHeaderCell({
                     role="menuitemcheckbox"
                     aria-checked={checked}
                     onClick={() => onToggleValue(col.key, val)}
-                    className="flex items-center gap-2.5 w-full text-left px-3.5 py-[7px] text-[13px] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/5 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+                    className="flex items-center gap-2.5 w-full text-left px-3.5 py-[7px] text-[13px] leading-[18px] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/5 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
                   >
-                    <span className={`flex items-center justify-center w-[15px] h-[15px] rounded-[4px] border transition-all duration-100 ${checked ? "text-white border-[color:var(--accent)]" : "border-gray-300 dark:border-white/20"}`}
+                    <span className={`shrink-0 flex items-center justify-center w-[15px] h-[15px] rounded-[4px] border transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 ${checked ? "text-white border-[color:var(--accent)]" : "border-gray-300 dark:border-white/20"}`}
                       style={checked ? { backgroundColor: "var(--accent)" } : {}}>
-                      {checked && <Check size={9.5} strokeWidth={3} />}
+                      {checked && <Check size={9.5} strokeWidth={3} className="shrink-0 block" />}
                     </span>
                     {val}
                   </button>

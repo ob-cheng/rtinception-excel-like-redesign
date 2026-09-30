@@ -9,11 +9,13 @@ import { useIdeasStore } from "./hooks/useIdeasStore";
 import { useIdeasGrid } from "./hooks/useIdeasGrid";
 import { usePreferences } from "./hooks/usePreferences";
 import { useColumnPrefs } from "./hooks/useColumnPrefs";
+import { useProfile } from "./hooks/useProfile";
 import { IdeasTableProvider, type IdeasTableContextValue } from "./context/IdeasTableContext";
 
 import { AppSidebar, type Page } from "./components/ideas/AppSidebar";
 import { GlobalStyles } from "./components/ideas/GlobalStyles";
 import { HelpPage } from "./components/ideas/HelpPage";
+import { HomePage } from "./components/ideas/HomePage";
 import { IdeaDetailPanel } from "./components/ideas/IdeaDetailPanel";
 import { IdeaHistoryPanel } from "./components/ideas/IdeaHistoryPanel";
 import { AddStudyButton } from "./components/ideas/AddStudyButton";
@@ -24,6 +26,7 @@ import { ColumnSettingsPopover } from "./components/ideas/ColumnSettingsPopover"
 import { PageHeader } from "./components/ideas/PageHeader";
 import { PortfolioPanel } from "./components/ideas/PortfolioPanel";
 import { PrioritizeModal } from "./components/ideas/PrioritizeModal";
+import { OnboardingModal, type OnboardingResult } from "./components/ideas/OnboardingModal";
 import { StatusBar } from "./components/ideas/StatusBar";
 import { ViewTabs } from "./components/ideas/ViewTabs";
 
@@ -37,13 +40,17 @@ export default function App() {
   // the default; Home is intentionally a blank canvas for now; Help is the FAQ.
   const [page, setPage] = useState<Page>("ideas");
 
-  const { theme, applyTheme, zoom, zoomIn, zoomOut, resetZoom, canZoomIn, canZoomOut } = usePreferences();
+  const { theme, applyTheme, zoom, setZoom, zoomIn, zoomOut, resetZoom, canZoomIn, canZoomOut } = usePreferences();
   // Per-view column customization (order + freeze + visibility), persisted like theme/zoom.
   const { prefs, setViewOrder, togglePin, toggleHidden, resetView, visibleKeys, frozenKeysFor } = useColumnPrefs();
+  // The user's setup (persona / default portfolio / focus tab), captured by the first-run interview
+  // and persisted like the other prefs. Read synchronously, so its defaults can seed the grid below.
+  const { profile, completeOnboarding, restartOnboarding } = useProfile();
 
   // Data/service layer — the single owner of rows and every record mutation.
   const store = useIdeasStore();
   // Grid interaction layer — cursor, selection, filters, sort, keyboard nav, and derivations.
+  // Seeded from the saved profile so the app opens on the user's default portfolio and tab.
   const grid = useIdeasGrid({
     rows: store.rows,
     commitCell: store.commitCell,
@@ -51,7 +58,20 @@ export default function App() {
     flushDirty: store.flushDirty,
     visibleKeys,
     frozenKeysFor,
+    initialPortfolio: profile.portfolio ?? "All",
+    initialView: profile.focusView ?? "Franchise",
   });
+
+  // Finish (or skip) the interview: apply the chosen portfolio/tab to the live grid — the grid's
+  // initial seed only covers a fresh load, so a redo needs to take effect immediately — then persist
+  // the profile and close. Theme/zoom were already applied live inside the modal.
+  const finishOnboarding = (result: OnboardingResult) => {
+    grid.setPortfolio(result.portfolio ?? "All");
+    grid.resetCursor();
+    grid.clearSelection();
+    if (result.focusView && result.focusView !== grid.view) grid.switchView(result.focusView);
+    completeOnboarding(result);
+  };
 
   // ── Overlay (modal / panel) state — genuinely App-level, since these float above every page. ──
   const [prioritizeOpen, setPrioritizeOpen] = useState(false);
@@ -208,6 +228,8 @@ export default function App() {
           canZoomIn,
           canZoomOut,
         }}
+        profile={profile}
+        onRestartOnboarding={restartOnboarding}
       />
 
       {/* The portfolio panel is contextual to the Ideas surface only. */}
@@ -216,13 +238,27 @@ export default function App() {
           rows={store.rows}
           active={grid.portfolio}
           open={grid.panelOpen}
+          pinned={grid.panelPinned}
           onSelect={p => { grid.setPortfolio(p); grid.resetCursor(); grid.clearSelection(); }}
           onToggle={() => grid.setPanelOpen(o => !o)}
+          onTogglePin={() => grid.setPanelPinned(p => {
+            const next = !p;
+            // Pinning implies "keep it open"; expand the panel if it was collapsed.
+            if (next) grid.setPanelOpen(true);
+            return next;
+          })}
         />
       )}
 
-      {/* Main */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      {/* Main — clicking anywhere in the working area (table, header, tabs, empty space)
+          auto-collapses the portfolio panel, unless the user has pinned it open. The sidebar and
+          portfolio panel are siblings of this element, so their clicks never bubble here. */}
+      <div
+        className="flex flex-col flex-1 overflow-hidden"
+        onClickCapture={() => {
+          if (page === "ideas" && grid.panelOpen && !grid.panelPinned) grid.setPanelOpen(false);
+        }}
+      >
         {page === "ideas" && (
           <main className="flex-1 overflow-hidden flex flex-col px-8 pt-7 pb-4 gap-4">
 
@@ -298,8 +334,8 @@ export default function App() {
 
         {page === "help" && <HelpPage />}
 
-        {/* Home is intentionally left empty for now. */}
-        {page === "home" && <main className="flex-1" />}
+        {/* Home isn't built yet — a friendly "coming soon" stand-in (of the Amazon-dog variety). */}
+        {page === "home" && <HomePage />}
       </div>
 
       <IdeaDetailPanel
@@ -316,8 +352,26 @@ export default function App() {
         open={prioritizeOpen}
         rows={store.rows}
         currentPortfolio={grid.portfolio}
+        // Role from setup — when present, the modal skips its "What's your role?" step.
+        initialPersona={profile.persona}
+        // Portfolio from setup — a VP's scope is auto-resolved from this (then the current view),
+        // so the "Choose a portfolio" step is skipped when a valid one is known.
+        preferredPortfolio={profile.portfolio}
         onClose={() => setPrioritizeOpen(false)}
         onCommit={(config, orderedUids) => { store.commitRanking(config, orderedUids); setPrioritizeOpen(false); }}
+      />
+
+      {/* First-run setup interview — shows until completed or skipped, and again on "Redo setup".
+          Theme/zoom are applied live via the pref setters; portfolio/tab/role commit on finish. */}
+      <OnboardingModal
+        open={!profile.onboarded}
+        initial={{ persona: profile.persona, portfolio: profile.portfolio, focusView: profile.focusView }}
+        theme={theme}
+        onSetTheme={applyTheme}
+        zoom={zoom}
+        onSetZoom={setZoom}
+        onSkip={finishOnboarding}
+        onComplete={finishOnboarding}
       />
 
       <AddStudyModal

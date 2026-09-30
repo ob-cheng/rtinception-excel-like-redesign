@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"/><style>html,body{margin:0}</style></head>
+<body><div id="root"></div>
+<script type="module">
+import './src/styles/index.css';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './src/app/App.tsx';
+// Ensure a clean first-run so the onboarding modal shows.
+try { Object.keys(localStorage).filter(k => k.startsWith('alcon.')).forEach(k => localStorage.removeItem(k)); } catch {}
+createRoot(document.getElementById('root')).render(React.createElement(App));
+</script></body></html>

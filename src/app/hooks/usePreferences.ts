@@ -31,7 +31,7 @@ function initialZoom(): number {
 // stays about data, not settings plumbing.
 export function usePreferences() {
   const [theme, setTheme] = useState<Theme>(initialTheme);
-  const [zoom, setZoom] = useState<number>(initialZoom);
+  const [zoom, setZoomState] = useState<number>(initialZoom);
 
   // Reflect the theme onto <html> so the .dark variant + color-scheme cover the
   // whole document (portals, scrollbars, form controls), not just the app subtree.
@@ -80,12 +80,22 @@ export function usePreferences() {
 
   const zoomIndex = ZOOM_STEPS.indexOf(zoom as (typeof ZOOM_STEPS)[number]);
   const zoomIn = useCallback(() => {
-    setZoom(z => ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, ZOOM_STEPS.indexOf(z as (typeof ZOOM_STEPS)[number]) + 1)]);
+    setZoomState(z => ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, ZOOM_STEPS.indexOf(z as (typeof ZOOM_STEPS)[number]) + 1)]);
   }, []);
   const zoomOut = useCallback(() => {
-    setZoom(z => ZOOM_STEPS[Math.max(0, ZOOM_STEPS.indexOf(z as (typeof ZOOM_STEPS)[number]) - 1)]);
+    setZoomState(z => ZOOM_STEPS[Math.max(0, ZOOM_STEPS.indexOf(z as (typeof ZOOM_STEPS)[number]) - 1)]);
   }, []);
-  const resetZoom = useCallback(() => setZoom(DEFAULT_ZOOM), []);
+  const resetZoom = useCallback(() => setZoomState(DEFAULT_ZOOM), []);
+
+  // Set zoom to an arbitrary value, snapping to the nearest supported step (used by the onboarding
+  // interview's size presets, which pass e.g. 0.9 / 1 / 1.25 directly).
+  const setZoom = useCallback((value: number) => {
+    const nearest = ZOOM_STEPS.reduce(
+      (best, step) => (Math.abs(step - value) < Math.abs(best - value) ? step : best),
+      ZOOM_STEPS[0],
+    );
+    setZoomState(nearest);
+  }, []);
 
   return {
     theme,
@@ -95,6 +105,7 @@ export function usePreferences() {
     zoomIn,
     zoomOut,
     resetZoom,
+    setZoom,
     canZoomIn: zoomIndex < ZOOM_STEPS.length - 1,
     canZoomOut: zoomIndex > 0,
   };

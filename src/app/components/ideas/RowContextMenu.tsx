@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import type { Idea } from "../../types";
 import { RowMenuItems, type RowMenuActions } from "./RowMenuItems";
 import { BulkMenuItems, type BulkMenuData } from "./BulkMenuItems";
+import { handleMenuKeys } from "../../lib/menuKeys";
 
 // The right-click twin of RowMenu: the SAME action list (RowMenuItems), but the glass panel is
 // pinned at the cursor instead of anchored to a kebab. It portals to <body> with position:fixed so
@@ -102,12 +103,18 @@ export function RowContextMenu({
     return () => window.clearTimeout(t);
   }, [closing, onClose]);
 
-  // Focus the first enabled item once mounted, so keyboard users can arrow/act immediately.
+  // Focus the first enabled item once mounted, so keyboard users can arrow/act immediately; on close,
+  // hand focus back to whatever opened the menu (the grid) unless an action already moved it on.
   useLayoutEffect(() => {
     const el = panelRef.current;
     if (!el) return;
+    const restoreTo = document.activeElement as HTMLElement | null;
     const first = el.querySelector<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])');
     first?.focus();
+    return () => {
+      const active = document.activeElement;
+      if (!active || active === document.body || el.contains(active)) restoreTo?.focus?.();
+    };
   }, []);
 
   return createPortal(
@@ -121,6 +128,7 @@ export function RowContextMenu({
       <div
         ref={panelRef}
         role="menu"
+        onKeyDown={handleMenuKeys}
         onAnimationEnd={() => { if (closing) onClose(); }}
         className={`${closing ? "pop-out" : "pop-in"} surface-pop fixed z-50 w-52 rounded-[16px] py-1.5 overflow-hidden`}
         style={{

@@ -50,7 +50,7 @@ export function ViewTabs({
               // without a mouse; the ~1-frame pointer-lead is not worth the lost keyboard support.
               onClick={() => onSelect(v)}
               onKeyDown={e => onKeyDown(e, i)}
-              className={`flex items-center gap-1.5 px-4 py-[9px] text-[13.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
+              className={`inline-flex items-center justify-center gap-1.5 px-4 py-[9px] text-[13px] leading-[16px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
                 selected ? "font-semibold text-[color:var(--text-1)]" : "font-medium text-[color:var(--text-3)] hover:text-[color:var(--text-2)]"
               }`}
             >

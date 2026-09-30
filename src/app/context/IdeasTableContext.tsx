@@ -30,7 +30,7 @@ export type IdeasTableContextValue = {
   selected: Set<string>;
   allSelected: boolean;
   someSelected: boolean;
-  onToggleRowSelected: (uid: string) => void;
+  onToggleRowSelected: (uid: string, shiftKey?: boolean) => void;
   onToggleSelectAll: () => void;
   sortCol: string | null;
   sortDir: SortDir;

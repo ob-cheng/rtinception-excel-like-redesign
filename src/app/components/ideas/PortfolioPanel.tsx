@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Layers, ChevronLeft as PanelCollapse } from "lucide-react";
+import { Layers, ChevronLeft as PanelCollapse, Pin, PinOff } from "lucide-react";
 import type { Idea } from "../../types";
 import { PORTFOLIOS, PORTFOLIO_ABBR } from "../../data/portfolios";
 
@@ -25,7 +25,7 @@ function PortfolioRow({
       <button
         onClick={() => onSelect(pKey)}
         title={label}
-        className={`relative w-full flex items-center gap-2 rounded-full text-left transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
+        className={`relative w-full flex items-center gap-2 rounded-full text-left transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-150 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent-ring)] ${
           isActive
             ? "shadow-[0_1px_3px_rgba(0,0,0,0.22)]"
             : "text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-gray-100 hover:shadow-[0_1px_3px_rgba(0,0,0,0.07)]"
@@ -40,11 +40,11 @@ function PortfolioRow({
       >
         {open ? (
           <>
-            <span className={`text-[13px] leading-snug flex-1 min-w-0 truncate ${isActive ? "font-medium" : ""}`}>
+            <span className={`pf-label-in text-[13px] leading-snug flex-1 min-w-0 truncate ${isActive ? "font-medium" : ""}`}>
               {label}
             </span>
             <span
-              className={`shrink-0 text-[11px] tabular-nums rounded-full px-[7px] py-px font-semibold ${
+              className={`pf-label-in shrink-0 text-[11px] tabular-nums rounded-full px-[7px] py-px font-semibold ${
                 isActive
                   ? "bg-white/20 text-white"
                   : count > 0
@@ -57,7 +57,7 @@ function PortfolioRow({
           </>
         ) : (
           <span
-            className={`text-[9px] font-bold tracking-[0.04em] ${
+            className={`pf-abbr-in text-[9px] font-bold tracking-[0.04em] ${
               isActive ? "text-white" : "text-gray-400 dark:text-gray-400"
             }`}
           >
@@ -72,14 +72,18 @@ export function PortfolioPanel({
   rows,
   active,
   open,
+  pinned,
   onSelect,
   onToggle,
+  onTogglePin,
 }: {
   rows: Idea[];
   active: string;
   open: boolean;
+  pinned: boolean;
   onSelect: (p: string) => void;
   onToggle: () => void;
+  onTogglePin: () => void;
 }) {
   // Counts depend only on rows, so recompute the Map only when rows change rather than on every
   // panel re-render (open/collapse, active-portfolio change).
@@ -107,27 +111,43 @@ export function PortfolioPanel({
       <div className="shrink-0 flex items-center" style={{ height: 56 }}>
         {open ? (
           <div className="flex items-center justify-between w-full px-5 pr-3">
-            <div className="flex items-center gap-2 select-none">
+            <div className="pf-label-in flex items-center gap-2 select-none">
               <Layers size={12} strokeWidth={2.2} className="text-gray-400 dark:text-gray-400 shrink-0" />
               <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-400 tracking-[0.06em] uppercase">
                 Portfolio
               </span>
             </div>
-            <button
-              onClick={onToggle}
-              title="Collapse"
-              className="p-1.5 rounded-full text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06] active:scale-95 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
-            >
-              <PanelCollapse size={13} strokeWidth={2} />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={onTogglePin}
+                title={pinned ? "Unpin — panel will auto-collapse" : "Pin panel open"}
+                aria-pressed={pinned}
+                aria-label={pinned ? "Unpin panel" : "Pin panel"}
+                className={`relative after:absolute after:content-[''] after:inset-0 [@media(pointer:coarse)]:after:-inset-[10px] inline-flex items-center justify-center leading-none p-1.5 rounded-full active:scale-95 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)] ${
+                  pinned
+                    ? "text-[color:var(--accent-strong)] bg-[color:var(--accent-strong)]/[0.12] hover:bg-[color:var(--accent-strong)]/[0.18]"
+                    : "text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]"
+                }`}
+              >
+                {pinned ? <Pin size={13} strokeWidth={2} className="shrink-0 pf-pin-pop fill-current" aria-hidden="true" /> : <PinOff size={13} strokeWidth={2} className="shrink-0 pf-pin-pop" aria-hidden="true" />}
+              </button>
+              <button
+                onClick={onToggle}
+                title="Collapse"
+                aria-label="Collapse panel"
+                className="relative after:absolute after:content-[''] after:inset-0 [@media(pointer:coarse)]:after:-inset-[10px] inline-flex items-center justify-center leading-none p-1.5 rounded-full text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.06] active:scale-95 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
+              >
+                <PanelCollapse size={13} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+              </button>
+            </div>
           </div>
         ) : (
           <button
             onClick={onToggle}
             title="Expand portfolio panel"
-            className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+            className="w-full h-full flex items-center justify-center leading-none text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
           >
-            <Layers size={15} strokeWidth={1.9} />
+            <Layers size={15} strokeWidth={1.9} className="shrink-0" />
           </button>
         )}
       </div>

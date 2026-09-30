@@ -33,7 +33,7 @@
   --accent: #0d2d6b;          /* brand navy — accent text, icons, borders, tints */
   --accent-2: #0f3272;        /* navy gradient stop */
   --accent-strong: #0d2d6b;   /* solid primary fills (white text sits on this) */
-  --accent-ring: rgba(13,45,107,0.30); /* focus ring */
+  --accent-ring: #0d2d6b; /* focus ring: solid brand navy, >=3:1 on light surfaces (WCAG 1.4.11) */
   --on-accent: #ffffff;       /* text on accent fills */
   --shadow-card: 0 1px 3px rgba(0,0,0,0.04);
 
@@ -169,7 +169,7 @@
   --accent: #5b9df8;        /* lifted brand blue — accent text, icons, borders */
   --accent-2: #4f8cf5;      /* accent gradient stop */
   --accent-strong: #2f6fe0; /* solid primary fills — white text passes on this */
-  --accent-ring: rgba(91,157,248,0.45); /* focus ring, brighter to read on dark */
+  --accent-ring: #5b9df8; /* focus ring: solid bright blue, >=3:1 on dark surfaces */
   --on-accent: #ffffff;
   --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
 

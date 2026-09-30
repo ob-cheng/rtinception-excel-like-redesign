@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePopoverFocus } from "../../hooks/usePopoverFocus";
 import { Moon, Sun } from "lucide-react";
 import type { Theme } from "../../hooks/usePreferences";
 import { ZoomControl } from "./ZoomControl";
@@ -31,6 +32,8 @@ export function SettingsPopover({
   // pop path it entered (§7). requestClose flips to pop-out; animationend calls the real onClose.
   const [closing, setClosing] = useState(false);
   const requestClose = useCallback(() => setClosing(true), []);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  usePopoverFocus(popoverRef);
 
   // Esc closes — never trap the user (Wayfinding, §16).
   useEffect(() => {
@@ -52,10 +55,12 @@ export function SettingsPopover({
       <div className="fixed inset-0 z-40" onPointerDown={requestClose} />
 
       <div
+        ref={popoverRef}
+        tabIndex={-1}
         role="dialog"
         aria-label="Settings"
         onAnimationEnd={() => { if (closing) onClose(); }}
-        className={`${closing ? "pop-out" : "pop-in"} absolute z-50 w-max min-w-[210px] rounded-[16px] p-1.5`}
+        className={`${closing ? "pop-out" : "pop-in"} absolute z-50 w-max min-w-[210px] rounded-[16px] p-1.5 outline-none`}
         style={{
           bottom: 0,
           left: "calc(100% + 12px)",
@@ -117,13 +122,13 @@ export function SettingsPopover({
                   role="radio"
                   aria-checked={selected}
                   onClick={() => onSetTheme(value)}
-                  className="relative z-10 flex items-center justify-center gap-1.5 h-full flex-1 px-2.5 rounded-full text-[12px] font-medium transition-colors duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+                  className="relative z-10 flex items-center justify-center gap-1.5 h-full flex-1 px-2.5 rounded-full text-[12px] leading-none font-medium transition-colors duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
                   // Named so the label rides in the top layer ABOVE the sliding thumb during the
                   // theme View Transition — otherwise the lifted thumb paints over it and the text
                   // is unreadable mid-slide. The label doesn't move; it just cross-fades its color.
                   style={{ color: selected ? "var(--text-1)" : "var(--text-3)", viewTransitionName: `appearance-seg-${value}` }}
                 >
-                  <Icon size={14} strokeWidth={2} />
+                  <Icon size={14} strokeWidth={2} className="shrink-0" />
                   {label}
                 </button>
               );

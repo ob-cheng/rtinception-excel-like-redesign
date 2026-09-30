@@ -32,16 +32,16 @@ export function ZoomControl({
         disabled={!canZoomOut}
         title="Zoom out"
         aria-label="Zoom out"
-        className="flex items-center justify-center h-full w-[30px] transition-colors duration-100 disabled:opacity-30 hover:bg-black/[0.04] dark:hover:bg-white/5 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+        className="relative after:absolute after:content-[''] after:inset-0 [@media(pointer:coarse)]:after:-inset-[7px] flex items-center justify-center h-full w-[30px] transition-colors duration-100 disabled:opacity-30 hover:bg-black/[0.04] dark:hover:bg-white/5 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
         style={{ color: "var(--text-2)" }}
       >
-        <Minus size={13} strokeWidth={2.4} />
+        <Minus size={13} strokeWidth={2.4} aria-hidden="true" />
       </button>
       <button
         onClick={onReset}
         title="Reset to 100%"
         aria-label="Reset zoom to 100%"
-        className="h-full px-1 min-w-[46px] text-[12px] font-medium tabular-nums transition-colors duration-100 hover:bg-black/[0.04] dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+        className="inline-flex items-center justify-center h-full px-1 min-w-[46px] text-[12px] leading-none font-medium tabular-nums transition-colors duration-100 hover:bg-black/[0.04] dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
         style={{
           color: "var(--text-2)",
           borderLeft: "1px solid var(--hairline)",
@@ -55,10 +55,10 @@ export function ZoomControl({
         disabled={!canZoomIn}
         title="Zoom in"
         aria-label="Zoom in"
-        className="flex items-center justify-center h-full w-[30px] transition-colors duration-100 disabled:opacity-30 hover:bg-black/[0.04] dark:hover:bg-white/5 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
+        className="relative after:absolute after:content-[''] after:inset-0 [@media(pointer:coarse)]:after:-inset-[7px] flex items-center justify-center h-full w-[30px] transition-colors duration-100 disabled:opacity-30 hover:bg-black/[0.04] dark:hover:bg-white/5 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-ring)]"
         style={{ color: "var(--text-2)" }}
       >
-        <Plus size={13} strokeWidth={2.4} />
+        <Plus size={13} strokeWidth={2.4} aria-hidden="true" />
       </button>
     </div>
   );

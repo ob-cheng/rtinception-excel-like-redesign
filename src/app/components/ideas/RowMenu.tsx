@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import type { Idea } from "../../types";
 import { RowMenuItems } from "./RowMenuItems";
+import { handleMenuKeys } from "../../lib/menuKeys";
 
 export function RowMenu({
   row,
@@ -25,7 +26,13 @@ export function RowMenu({
   // entered — the same pop path the right-click menu uses (§7 / Familiarity).
   const [closing, setClosing] = useState(false);
   const requestClose = useCallback(() => setClosing(true), []);
-  const finishClose = useCallback(() => { setOpen(false); setClosing(false); }, []);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const finishClose = useCallback(() => {
+    setOpen(false); setClosing(false);
+    // Return focus to the kebab if it was inside the menu (or lost), not if an action moved it on.
+    const active = document.activeElement;
+    if (!active || active === document.body || menuRef.current?.contains(active)) triggerRef.current?.focus();
+  }, []);
 
   // Fallback: unmount even if the pop-out animationend never fires (animations disabled).
   useEffect(() => {
@@ -48,6 +55,7 @@ export function RowMenu({
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Row actions"
@@ -65,12 +73,12 @@ export function RowMenu({
             else { setClosing(false); setOpen(true); }
           }
         }}
-        className="p-1.5 rounded-[8px] active:scale-95 transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
+        className="inline-flex items-center justify-center leading-none p-1.5 rounded-[8px] active:scale-95 transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
         style={{ color: "var(--text-3)" }}
         onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--hairline)")}
         onMouseLeave={e => (e.currentTarget.style.backgroundColor = "")}
       >
-        <MoreHorizontal size={14} />
+        <MoreHorizontal size={14} className="shrink-0 block" />
       </button>
 
       {open && (
@@ -79,6 +87,7 @@ export function RowMenu({
           <div
             ref={menuRef}
             role="menu"
+            onKeyDown={handleMenuKeys}
             onAnimationEnd={() => { if (closing) finishClose(); }}
             className={`${closing ? "pop-out" : "pop-in"} surface-pop absolute right-0 top-full mt-1.5 z-50 w-52 rounded-[16px] py-1.5 overflow-hidden`}
             style={{

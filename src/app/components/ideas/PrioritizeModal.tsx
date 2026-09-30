@@ -33,12 +33,21 @@ export function PrioritizeModal({
   open,
   rows,
   currentPortfolio,
+  initialPersona,
+  preferredPortfolio,
   onClose,
   onCommit,
 }: {
   open: boolean;
   rows: Idea[];
   currentPortfolio: string;
+  // The user's role from the setup interview (useProfile). When set, the modal skips its
+  // "What's your role?" step and opens straight on scope. Null → ask as before.
+  initialPersona?: RankPersona | null;
+  // The user's saved portfolio from setup. For a Therapeutic Area VP the prioritization scope IS
+  // a portfolio, so we resolve it (preferred → current view) and skip the "Choose a portfolio"
+  // step when a valid one is known. Null / "All" → fall back to the current view, then ask.
+  preferredPortfolio?: string | null;
   onClose: () => void;
   onCommit: (config: RankingConfig, orderedUids: string[]) => void;
 }) {
@@ -56,11 +65,22 @@ export function PrioritizeModal({
   useEffect(() => {
     if (open) {
       setMounted(true);
-      setStep("persona");
-      setPersona(null);
-      setScope(null);
-      setOrder([]);
       setActiveId(null);
+      const startPersona = initialPersona ?? null;
+      setPersona(startPersona);
+      // A VP prioritizes a whole portfolio, so if we can resolve which one (saved preference, then
+      // the current view) we skip the "Choose a portfolio" step and open straight on the reorder.
+      const autoScope = startPersona === "portfolio" ? resolveVpScope() : null;
+      if (autoScope) {
+        setScope(autoScope);
+        setOrder(scopeRows("portfolio", autoScope));
+        setStep("reorder");
+      } else {
+        setScope(null);
+        setOrder([]);
+        // With a role already known from setup, skip straight to scope; otherwise ask the role.
+        setStep(startPersona ? "scope" : "persona");
+      }
     } else {
       // Play the exit, then unmount once it has settled.
       setVisible(false);
@@ -217,9 +237,26 @@ export function PrioritizeModal({
     return rows.filter(inScope).sort((a, b) => compareCells(a[field], b[field], "asc"));
   }
 
+  // The portfolio a VP should prioritize, without asking: their saved preference wins, then the
+  // portfolio the list is currently narrowed to. "All" isn't a single portfolio, and a portfolio
+  // with no records can't be prioritized — both fall through to the scope picker.
+  function resolveVpScope(): string | null {
+    for (const candidate of [preferredPortfolio, currentPortfolio]) {
+      if (candidate && candidate !== "All" && rows.some(r => r.portfolio === candidate)) return candidate;
+    }
+    return null;
+  }
+
   function pickPersona(p: RankPersona) {
     setPersona(p);
-    setStep("scope");
+    const autoScope = p === "portfolio" ? resolveVpScope() : null;
+    if (autoScope) {
+      setScope(autoScope);
+      setOrder(scopeRows("portfolio", autoScope));
+      setStep("reorder");
+    } else {
+      setStep("scope");
+    }
   }
 
   function pickScope(s: string) {
@@ -262,10 +299,10 @@ export function PrioritizeModal({
   }
 
   const header = step === "persona"
-    ? { title: "Prioritize records", sub: "What's your role?" }
+    ? { title: "Prioritize ideas", sub: "What's your role?" }
     : step === "scope"
       ? persona === "brand"
-        ? { title: "Choose a product", sub: "Tap to begin prioritizing this product's records." }
+        ? { title: "Choose a product", sub: "Tap to begin prioritizing this product's ideas." }
         : { title: "Choose a portfolio", sub: "Tap to begin prioritizing this portfolio." }
       : { title: scope ?? "", sub: "Drag cards to reorder · top card is highest priority" };
 
@@ -284,13 +321,13 @@ export function PrioritizeModal({
         ref={shellRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Prioritize records"
+        aria-label="Prioritize ideas"
         className="relative flex flex-col rounded-[20px] overflow-hidden"
         style={{
           backgroundColor: "var(--surface-modal)",
           width: size ? size.w : targetWidth,
           height: size ? size.h : "auto",
-          maxHeight: "90vh",
+          maxHeight: "90dvh",
           boxShadow: "0 32px 80px -16px rgba(15,23,42,0.42), 0 0 0 1px var(--hairline)",
           opacity: visible ? 1 : 0,
           transform: visible ? "scale(1) translateY(0)" : "scale(0.96) translateY(12px)",
@@ -300,7 +337,7 @@ export function PrioritizeModal({
         }}
       >
         {/* Measured content — its natural height drives the shell height. */}
-        <div ref={contentRef} className="flex flex-col" style={{ maxHeight: "90vh" }}>
+        <div ref={contentRef} className="flex flex-col min-h-0 h-full" style={{ maxHeight: "90dvh" }}>
           {/* Header */}
           <div
             className="shrink-0 flex items-start justify-between gap-4 px-6 pt-5 pb-4"
@@ -318,15 +355,15 @@ export function PrioritizeModal({
                   <span className="text-[12px]" style={{ color: "var(--text-3)" }}>Setting {fieldLabel}</span>
                 </div>
               )}
-              <h2 className="text-[18px] font-semibold text-gray-900 dark:text-gray-100 tracking-[-0.02em] truncate">{header.title}</h2>
+              <h2 className="text-[17px] font-semibold text-gray-900 dark:text-gray-100 tracking-[-0.02em] truncate">{header.title}</h2>
               <p className="text-[13px] mt-0.5" style={{ color: "var(--text-3)" }}>{header.sub}</p>
             </div>
             <button
               onClick={onClose}
               aria-label="Close"
-              className="shrink-0 -mr-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-100/70 dark:bg-white/[0.06] hover:bg-gray-200/70 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-all duration-100"
+              className="shrink-0 -mr-1 grid place-items-center w-8 h-8 rounded-full text-gray-400 dark:text-gray-400 bg-gray-100/70 dark:bg-white/[0.06] hover:bg-gray-200/70 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-200 active:scale-95 transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
             >
-              <X size={15} strokeWidth={2.25} />
+              <X size={15} strokeWidth={2.25} className="shrink-0" />
             </button>
           </div>
 
@@ -337,7 +374,7 @@ export function PrioritizeModal({
                 <PersonaCard
                   icon={<Eye size={20} strokeWidth={1.9} />}
                   title="Brand Director"
-                  subtitle="Prioritize one product's records"
+                  subtitle="Prioritize one product's ideas"
                   onClick={() => pickPersona("brand")}
                 />
                 <PersonaCard
@@ -350,16 +387,16 @@ export function PrioritizeModal({
             )}
 
             {step === "scope" && (
-              <div className="overflow-y-auto px-3 py-3" style={{ maxHeight: "calc(90vh - 200px)" }}>
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3">
                 {options.length === 0 ? (
-                  <p className="px-3 py-8 text-center text-[13px] text-gray-400 dark:text-gray-400">No records available to prioritize.</p>
+                  <p className="px-3 py-8 text-center text-[13px] text-gray-400 dark:text-gray-400">No ideas available to prioritize.</p>
                 ) : (
                   <ul className="flex flex-col">
                     {options.map(opt => (
                       <li key={opt.name}>
                         <button
                           onClick={() => pickScope(opt.name)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:bg-black/[0.07] dark:active:bg-white/10 transition-colors duration-100"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:bg-black/[0.07] dark:active:bg-white/10 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
                         >
                           <span className="shrink-0 grid place-items-center w-9 h-9 rounded-[12px] text-white" style={{ backgroundColor: "var(--accent-strong)" }}>
                             {persona === "brand"
@@ -367,9 +404,9 @@ export function PrioritizeModal({
                               : <span className="text-[11px] font-semibold tracking-wide">{PORTFOLIO_ABBR[opt.name] ?? <Layers size={16} />}</span>}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block text-[14px] text-gray-900 dark:text-gray-100 truncate">{opt.name}</span>
+                            <span className="block text-[15px] text-gray-900 dark:text-gray-100 truncate">{opt.name}</span>
                             <span className="block text-[12px]" style={{ color: "var(--text-3)" }}>
-                              {opt.count} record{opt.count === 1 ? "" : "s"}
+                              {opt.count} idea{opt.count === 1 ? "" : "s"}
                               {persona === "brand" && currentPortfolio === "All" && "portfolio" in opt
                                 ? ` · ${(opt as { portfolio: string }).portfolio}`
                                 : ""}
@@ -385,9 +422,9 @@ export function PrioritizeModal({
             )}
 
             {step === "reorder" && (
-              <div className="overflow-y-auto px-5 py-4" style={{ maxHeight: "calc(90vh - 220px)" }}>
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4">
                 {order.length === 0 ? (
-                  <p className="py-12 text-center text-[13px] text-gray-400 dark:text-gray-400">No records to prioritize.</p>
+                  <p className="py-12 text-center text-[13px] text-gray-400 dark:text-gray-400">No ideas to prioritize.</p>
                 ) : (
                   <DndContext
                     sensors={sensors}
@@ -447,9 +484,9 @@ export function PrioritizeModal({
             ) : (
               <button
                 onClick={goBack}
-                className="inline-flex items-center gap-1 text-[13px] text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors duration-100"
+                className="inline-flex items-center justify-center gap-1 leading-none text-[13px] text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors duration-100 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
               >
-                <ChevronLeft size={15} /> Back
+                <ChevronLeft size={15} className="shrink-0" /> Back
               </button>
             )}
 
@@ -457,14 +494,14 @@ export function PrioritizeModal({
               <div className="flex items-center gap-3">
                 <button
                   onClick={onClose}
-                  className="h-[36px] px-5 rounded-full text-[13px] font-medium text-gray-600 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.98] transition-all duration-100"
+                  className="inline-flex items-center justify-center h-[36px] px-5 rounded-full text-[13px] leading-none font-medium text-gray-600 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-[0.98] transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => persona && scope && onCommit({ persona, scope }, order.map(r => r.uid))}
                   disabled={order.length === 0}
-                  className="h-[36px] px-6 rounded-full text-white text-[13px] font-medium active:scale-[0.99] transition-all duration-100 disabled:opacity-40"
+                  className="inline-flex items-center justify-center h-[36px] px-6 rounded-full text-white text-[13px] leading-none font-medium active:scale-[0.99] transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent-ring)]"
                   style={{ backgroundColor: "var(--accent-strong)" }}
                 >
                   Save priorities
@@ -494,7 +531,7 @@ function PersonaCard({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-start gap-3 p-4 rounded-[16px] text-left bg-white/70 dark:bg-white/[0.03] hover:bg-white dark:hover:bg-[#1f1f21] active:scale-[0.98] transition-all duration-100"
+      className="flex flex-col items-start gap-3 p-4 rounded-[16px] text-left bg-white/70 dark:bg-white/[0.03] hover:bg-white dark:hover:bg-[#1f1f21] active:scale-[0.98] transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
       style={{ border: "1px solid var(--hairline)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}
     >
       <span className="grid place-items-center w-11 h-11 rounded-[12px]" style={{ backgroundColor: "color-mix(in srgb, var(--accent) 16%, transparent)", color: "var(--accent)" }}>
@@ -653,7 +690,7 @@ function PriorityCard({
               title={hasBrandRank ? `${row.project} ranks this #${brandRankNum}${brandTotal ? ` of ${brandTotal}` : ""}` : row.project}
             >
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: brandColor ?? brandHue(row.project) }} />
-              <span className="text-[11.5px] font-medium tracking-[-0.01em] text-gray-700 dark:text-gray-200 truncate max-w-[150px]">
+              <span className="text-[12px] font-medium tracking-[-0.01em] text-gray-700 dark:text-gray-200 truncate max-w-[150px]">
                 {row.project}
               </span>
               {hasBrandRank ? (
@@ -661,10 +698,10 @@ function PriorityCard({
                   className="shrink-0 inline-flex items-baseline gap-[3px] pl-1.5 ml-0.5"
                   style={{ borderLeft: "1px solid var(--hairline)" }}
                 >
-                  <span className="text-[10px]" style={{ color: "var(--text-3)" }}>brand</span>
-                  <span className="text-[11.5px] font-semibold tabular-nums text-gray-800 dark:text-gray-100">#{brandRankNum}</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-3)" }}>brand</span>
+                  <span className="text-[12px] font-semibold tabular-nums text-gray-800 dark:text-gray-100">#{brandRankNum}</span>
                   {brandTotal && brandTotal > 0 ? (
-                    <span className="text-[10px] tabular-nums" style={{ color: "var(--text-4)" }}>/ {brandTotal}</span>
+                    <span className="text-[11px] tabular-nums" style={{ color: "var(--text-4)" }}>/ {brandTotal}</span>
                   ) : null}
                 </span>
               ) : null}
@@ -673,7 +710,7 @@ function PriorityCard({
         </div>
 
         <p
-          className="text-[13.5px] leading-[1.42] text-gray-800 dark:text-gray-100 mb-1.5"
+          className="text-[13px] leading-[1.42] text-gray-800 dark:text-gray-100 mb-1.5"
           style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
           title={row.potentialClaims}
         >
@@ -693,17 +730,17 @@ function PriorityCard({
             onClick={() => onNudge(-1)}
             disabled={index === 0}
             aria-label="Move up"
-            className="grid place-items-center w-7 h-7 rounded-[8px] text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-all duration-100"
+            className="relative after:absolute after:content-[''] after:-inset-0.5 [@media(pointer:coarse)]:after:-inset-2 grid place-items-center w-7 h-7 rounded-[8px] text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
           >
-            <ChevronUp size={14} strokeWidth={2.2} />
+            <ChevronUp size={14} strokeWidth={2.2} className="shrink-0" />
           </button>
           <button
             onClick={() => onNudge(1)}
             disabled={index === total - 1}
             aria-label="Move down"
-            className="grid place-items-center w-7 h-7 rounded-[8px] text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-all duration-100"
+            className="relative after:absolute after:content-[''] after:-inset-0.5 [@media(pointer:coarse)]:after:-inset-2 grid place-items-center w-7 h-7 rounded-[8px] text-gray-400 dark:text-gray-400 hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-20 disabled:hover:bg-transparent active:scale-90 transition-[scale,transform,background-color,color,border-color,box-shadow,opacity] duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-ring)]"
           >
-            <ChevronDown size={14} strokeWidth={2.2} />
+            <ChevronDown size={14} strokeWidth={2.2} className="shrink-0" />
           </button>
         </div>
       )}
@@ -714,7 +751,7 @@ function PriorityCard({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <span className="inline-flex items-baseline gap-1">
-      <span className="text-[10px] uppercase tracking-wide" style={{ color: "var(--text-4)" }}>{label}</span>
+      <span className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-4)" }}>{label}</span>
       <span className="text-[12px] font-medium text-gray-700 dark:text-gray-200 tabular-nums">{value || "—"}</span>
     </span>
   );
